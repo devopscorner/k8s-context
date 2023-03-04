@@ -40,7 +40,6 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 - Clone this repository
   ```
-  --
   git clone https://github.com/devopscorner/k8s-context.git
 
   # -- or -- #
