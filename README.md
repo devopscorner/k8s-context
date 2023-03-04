@@ -90,7 +90,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   # Mac M1/M2 (Arm)
   make build-mac-arm
 
-  -- or --
+  # -- or -- #
 
   cd src
   GO111MODULE=$(GO111MODULE) GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -o build/$(GO_APP) $(BUILD_FLAGS) -ldflags "$(LDFLAGS)" ./main.go
@@ -109,7 +109,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   KUBECONFIG=$HOME/.kube/config-new-cluster
   ./k8s-context --context=config-new-cluster
 
-  -- or --
+  # -- or -- #
 
   ./k8s-context --kubeconfig=$HOME/.kube/config-new-cluster --context=config-new-cluster
   ```
