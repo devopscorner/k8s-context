@@ -103,16 +103,19 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 - Run Spesific KUBECONFIG
   ```
-  KUBECONFIG=~/.kube/config-new-cluster
+  KUBECONFIG=$HOME/.kube/config-new-cluster
   ./k8s-context --context=config-new-cluster
 
   -- or --
 
-  ./k8s-context --kubeconfig=~/.kube/config-new-cluster --context=config-new-cluster
+  ./k8s-context --kubeconfig=$HOME/.kube/config-new-cluster --context=config-new-cluster
 
   -- EKS --
 
   ./k8s-context --context=arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
+  eg:
+  ---
+  ./k8s-context --kubeconfig=$HOME/.kube/config-eks-devopscorner-staging --context=arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging
   ```
 
 ## Tested Environment
