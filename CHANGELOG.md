@@ -40,8 +40,10 @@ Customize Kubernetes Change Context (KUBECONFIG)
 ### version 1.0
 
 - First deployment GO Apps
-- Script build image
-- Script ecr-tag & ecr-push
-- Helm deployment values
-- Upgrade gomod, using GO `1.17`
-- Dockerfile using `golang:1.17-alpine3.15`
+- Script build container for dockerhub & ecr
+- Script tag container for dockerhub & ecr
+- Script push container for dockerhub & ecr
+- Upgrade gomod, using GO `1.19.5`
+- Dockerfile Alpine-3.15 using `golang:1.19.3-alpine3.15`
+- Dockerfile Alpine-3.16 using `golang:1.19.5-alpine3.16`
+- Dockerfile Alpine-3.17 using `golang:1.19.5-alpine3.17`

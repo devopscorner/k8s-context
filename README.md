@@ -40,7 +40,12 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 - Clone this repository
   ```
-  git@github.com:devopscorner/k8s-context.git
+  --
+  git clone https://github.com/devopscorner/k8s-context.git
+
+  # -- or -- #
+
+  git clone git@github.com:devopscorner/k8s-context.git
   ```
 
 - Run Initialize
@@ -104,11 +109,11 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
   -- or --
 
-  k8s-context --kubeconfig=~/.kube/config-new-cluster --context=config-new-cluster
+  ./k8s-context --kubeconfig=~/.kube/config-new-cluster --context=config-new-cluster
 
   -- EKS --
 
-  k8s-context --context=arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
+  ./k8s-context --context=arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
   ```
 
 ## Tested Environment
@@ -152,7 +157,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   ```
   go version
   ---
-  go version go1.20.1 darwin/arm64
+  go version go1.19.5 darwin/arm64
   ```
 
 ## Security Check
