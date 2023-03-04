@@ -129,6 +129,12 @@ Customize Kubernetes Change Context (KUBECONFIG)
   INFO[0000] info Successfully changed context to arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod
   ```
 
+- Integrated with CI/CD `Dockerfile` Pipeline
+  ```
+  # Dockerfile
+  COPY --from=devopscorner/k8s-context:latest /usr/local/bin/goapp /usr/local/bin/k8s-context
+  ```
+
 ## Tested Environment
 
 ### Versioning
