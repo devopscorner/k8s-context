@@ -64,6 +64,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   export VERSION=$(sh git describe --tags --always --dirty)
   export GOPKGS=$(sh go list ./ | grep -v /vendor/)
   export GO111MODULE=on
+  export LDFLAGS=-X github.com/devopscorner/k8s-context/config.Version=$(VERSION) -w -s
 
   # Linux x86
   export GOARCH=amd64
@@ -89,7 +90,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   # Mac M1/M2 (Arm)
   make build-mac-arm
 
-  # -- or -- #
+  -- or --
 
   cd src
   GO111MODULE=$(GO111MODULE) GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -o build/$(GO_APP) $(BUILD_FLAGS) -ldflags "$(LDFLAGS)" ./main.go
@@ -97,25 +98,35 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 - Running Binary
   ```
-  cd bin
+  cd src/build
   ./k8s-context
   ```
 
 - Run Spesific KUBECONFIG
   ```
+  cd src/build
+
   KUBECONFIG=$HOME/.kube/config-new-cluster
   ./k8s-context --context=config-new-cluster
 
   -- or --
 
   ./k8s-context --kubeconfig=$HOME/.kube/config-new-cluster --context=config-new-cluster
+  ```
 
-  -- EKS --
+- Run for Amazon EKS
+  ```
+  cd src/build
 
-  ./k8s-context --context=arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
-  eg:
+  ./k8s-context --kubeconfig=${KUBECONFIG} --context=arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
+
+  ./k8s-context --kubeconfig=$HOME/.kube/config-devopscorner_staging --context=arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging
   ---
-  ./k8s-context --kubeconfig=$HOME/.kube/config-eks-devopscorner-staging --context=arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging
+  INFO[0000] info Successfully changed context to arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging
+
+  ./k8s-context --kubeconfig=$HOME/.kube/config-devopscorner_prod --context=arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod
+  ---
+  INFO[0000] info Successfully changed context to arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod
   ```
 
 ## Tested Environment
