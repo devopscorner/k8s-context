@@ -2,7 +2,7 @@
 
 Customize Kubernetes Change Context (KUBECONFIG)
 
-![goreport](https://goreportcard.com/badge/github.com/devopscorner/k8s-context)
+![goreport](https://goreportcard.com/badge/github.com/devopscorner/k8s-context/src)
 ![all contributors](https://img.shields.io/github/contributors/devopscorner/k8s-context)
 ![tags](https://img.shields.io/github/v/tag/devopscorner/k8s-context?sort=semver)
 [![docker pulls](https://img.shields.io/docker/pulls/devopscorner/k8s-context.svg)](https://hub.docker.com/r/devopscorner/k8s-context/)
