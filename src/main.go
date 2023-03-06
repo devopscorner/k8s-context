@@ -2,34 +2,26 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"io/ioutil"
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "k8s-context",
+	Short: "A tool to change the current context in a Kubernetes configuration file",
+	RunE:  changeContextCmd,
+}
+
 var (
-	Log            *log.Logger
 	kubeconfigPath string
 	contextName    string
 )
 
 func init() {
-	// Configure Logrus to output JSON to stdout.
-	// log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-}
-
-func main() {
-	// Define a command-line flag for the Kubernetes configuration file.
-	flag.StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the Kubernetes configuration file")
-	flag.StringVar(&contextName, "context", "", "Context name (kubernetes cluster)")
-
-	// Parse the command-line flags.
-	flag.Parse()
-
 	// If the user didn't specify a kubeconfig file, use the default location.
 	if kubeconfigPath == "" {
 		kubeconfigPath = os.Getenv("KUBECONFIG")
@@ -42,14 +34,35 @@ func main() {
 		contextName = "devopscorner-context"
 	}
 
+	rootCmd.Flags().StringVar(&kubeconfigPath, "kubeconfig", "", "Path to the Kubernetes configuration file")
+	rootCmd.MarkFlagRequired("kubeconfig")
+
+	rootCmd.Flags().StringVar(&contextName, "context", "", "Context name (kubernetes cluster)")
+	rootCmd.MarkFlagRequired("context")
+
+	// Configure Logrus to output JSON to stdout.
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		// logMessage("Failed to execute command", err, log.ErrorLevel)
+		// fmt.Fprintf(os.Stderr, "Failed to execute command '%s'", err)
+		os.Exit(1)
+	}
+}
+
+func changeContextCmd(cmd *cobra.Command, args []string) error {
 	// Change the current context.
 	if err := ChangeKubeconfigContext(kubeconfigPath, contextName); err != nil {
-		logMessage(" Failed to change Kubernetes context "+contextName, err, log.ErrorLevel)
-		return
+		// logMessage(" Failed to change Kubernetes context "+contextName, err, log.ErrorLevel)
+		return err
 	}
 
 	// Log success.
-	logMessage(" Successfully changed context to "+contextName, nil, log.InfoLevel)
+	logMessage("Successfully changed context to "+contextName, nil, log.InfoLevel)
+	return nil
 }
 
 func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
@@ -67,7 +80,7 @@ func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
 
 	// Check if the specified context exists.
 	if _, ok := kubeconfig.Contexts[contextName]; !ok {
-		return errors.New(" context does not exist in the Kubernetes configuration file")
+		return errors.New("context does not exist in the Kubernetes configuration file")
 	}
 
 	// Change the current context to the new context.
