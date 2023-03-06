@@ -132,7 +132,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 - Integrated with CI/CD `Dockerfile` Pipeline
   ```
   # Dockerfile
-  COPY --from=devopscorner/k8s-context:latest /usr/local/bin/goapp /usr/local/bin/k8s-context
+  COPY --from=devopscorner/k8s-context:latest /usr/local/bin/k8s-context /usr/local/bin/k8s-context
   ```
 
 ## Tested Environment
