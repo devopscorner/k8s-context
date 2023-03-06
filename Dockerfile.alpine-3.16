@@ -19,7 +19,8 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
         go build -mod=readonly -ldflags="-s -w" -o goapp
 
 ### Binary ###
-FROM golang:1.19.5-alpine3.16
+# FROM golang:1.19.5-alpine3.16
+FROM nginx:${NGINX_VERSION:-1.23-alpine}
 
 ARG BUILD_DATE
 ARG BUILD_VERSION
@@ -58,7 +59,11 @@ LABEL maintainer="$AUTHOR" \
         fr.hbis.docker.base.version="$BUILD_VERSION"
 
 ENV GIN_MODE=release
-COPY --from=builder /go/src/app/goapp /usr/local/bin/goapp
+COPY --from=devopscorner/cicd:alpine /usr/local/bin/ /usr/local/bin/
+COPY --from=builder /go/src/app/goapp /usr/local/bin/k8s-context
 
-ENTRYPOINT ["/usr/local/bin/goapp"]
-EXPOSE 8080
+EXPOSE 22 80 443
+
+STOPSIGNAL SIGQUIT
+
+CMD ["nginx", "-g", "daemon off;"]
