@@ -37,6 +37,15 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 ---
 
+### version 1.1
+
+- Change dependencies container "FROM", using `nginx:1.23-alpine`
+- Added all dependencies binary from `devopscorner/cicd:alpine`
+- Fixing menu parameter with `spf13/cobra`
+- Set default logs to logrus with JSON formatter
+
+---
+
 ### version 1.0
 
 - First deployment GO Apps
