@@ -9,7 +9,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.148.148.0/16
+        - subnet: 172.148.0.0/16
 
 #================================================================================================
 # VOLUME SETUP
@@ -57,10 +57,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # image: devopscorner/k8s-context:alpine
     container_name: ${CONTAINER_K8S_CONTEXT:-devopscorner_k8s_context}
     restart: unless-stopped
     ports:
-      - "${PORT_K8S_CONTEXT:-8080}:8080"
+      - "${PORT_K8S_CONTEXT:-8080}:80"
     volumes:
     # - /etc/localtime:/etc/localtime:ro          ## Do not use it in mac
       - /var/run/docker.sock:/var/run/docker.sock ## Do not use it in k8s
