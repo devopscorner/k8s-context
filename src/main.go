@@ -167,7 +167,7 @@ func main() {
 	}
 
 	listContextsCmd := &cobra.Command{
-		Use:   "list-contexts",
+		Use:   "list",
 		Short: "List the available contexts in the kubeconfig file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Loading kubeconfig...")
@@ -189,7 +189,7 @@ func main() {
 	}
 
 	selectContextCmd := &cobra.Command{
-		Use:   "select-context",
+		Use:   "select",
 		Short: "Select a context from the kubeconfig file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := kc.Load(); err != nil {
