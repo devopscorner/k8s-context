@@ -3,7 +3,6 @@ module github.com/devopscorner/k8s-context/src
 go 1.19
 
 require (
-	github.com/manifoldco/promptui v0.9.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
@@ -13,8 +12,6 @@ require (
 )
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.6 // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -30,12 +27,8 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
-	github.com/mattn/go-colorable v0.1.2 // indirect
-	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

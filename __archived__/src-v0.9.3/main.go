@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/devopscorner/k8s-context/src/features"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
@@ -93,6 +92,47 @@ func main() {
 			resource := args[0]
 
 			switch resource {
+			// case "pods":
+			// 	pods, err := clientset.CoreV1().Pods("").List(ctx, v1.ListOptions{})
+			// 	if err != nil {
+			// 		return err
+			// 	}
+
+			// 	table := tablewriter.NewWriter(os.Stdout)
+			// 	// table.SetHeader([]string{"POD NAME", "NAMESPACE", "READY", "STATUS", "RESTARTS", "AGE", "IMAGE", "NODE", "OWNER KIND", "OWNER NAME", "LABELS"})
+			// 	// table.SetHeader([]string{"POD NAME", "NAMESPACE", "STATUS", "RESTARTS", "AGE", "IMAGE", "NODE", "OWNER KIND", "OWNER NAME", "LABELS"})
+			// 	table.SetHeader([]string{"POD NAME", "NAMESPACE", "STATUS", "RESTARTS", "AGE", "IMAGE"})
+
+			// 	table.SetAutoFormatHeaders(false)
+			// 	table.SetAutoWrapText(false)
+
+			// 	for _, pod := range pods.Items {
+			// 		var containerStatuses []string
+			// 		for _, cs := range pod.Status.ContainerStatuses {
+			// 			containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
+			// 		}
+			// 		// ready, total := features.CalculateReadiness(&pod)
+			// 		age := features.HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
+			// 		image := strings.Join(features.GetContainerImages(&pod), ", ")
+			// 		// node := pod.Spec.NodeName
+			// 		// ownerKind, ownerName := features.GetOwnerKindAndName(&pod)
+			// 		// labels := strings.Join(features.GetLabels(&pod), ", ")
+
+			// 		table.Append([]string{
+			// 			pod.Name,
+			// 			// fmt.Sprintf("%d/%d", ready, total),
+			// 			pod.Namespace,
+			// 			string(pod.Status.Phase),
+			// 			strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
+			// 			age,
+			// 			image,
+			// 			// node,
+			// 			// ownerKind,
+			// 			// ownerName,
+			// 			// labels,
+			// 		})
+			// 	}
+			// 	table.Render()
 
 			case "pods":
 				namespaces, err := clientset.CoreV1().Namespaces().List(ctx, v1.ListOptions{})
@@ -166,81 +206,10 @@ func main() {
 		},
 	}
 
-	listContextsCmd := &cobra.Command{
-		Use:   "list-contexts",
-		Short: "List the available contexts in the kubeconfig file",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Loading kubeconfig...")
-			if err := kc.Load(); err != nil {
-				return err
-			}
-
-			fmt.Printf("Loaded kubeconfig with %d contexts\n", len(kc.Merged.Contexts))
-
-			var contextNames []string
-			for contextName := range kc.Merged.Contexts {
-				contextNames = append(contextNames, contextName)
-			}
-
-			fmt.Printf("Available contexts: %v\n", contextNames)
-
-			return nil
-		},
-	}
-
-	selectContextCmd := &cobra.Command{
-		Use:   "select-context",
-		Short: "Select a context from the kubeconfig file",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := kc.Load(); err != nil {
-				return err
-			}
-
-			var contextNames []string
-			for contextName := range kc.Merged.Contexts {
-				contextNames = append(contextNames, contextName)
-			}
-
-			var selectedContext string
-			prompt := &survey.Select{
-				Message: "Select a context",
-				Options: contextNames,
-			}
-
-			if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
-				return err
-			}
-
-			fmt.Printf("Selected context: %s\n", selectedContext)
-
-			config := kc.Merged
-			context, ok := config.Contexts[selectedContext]
-			if !ok {
-				return fmt.Errorf("context not found: %s", selectedContext)
-			}
-
-			cluster, ok := config.Clusters[context.Cluster]
-			if !ok {
-				return fmt.Errorf("cluster not found: %s", context.Cluster)
-			}
-
-			auth, ok := config.AuthInfos[context.AuthInfo]
-			if !ok {
-				return fmt.Errorf("auth info not found: %s", context.AuthInfo)
-			}
-
-			fmt.Printf("Cluster server: %s\n", cluster.Server)
-			fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
-			fmt.Printf("User name: %s\n", auth.Username)
-
-			return nil
-		},
-	}
-
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
 
-	rootCmd.AddCommand(versionCmd, loadCmd, mergeCmd, getCmd, listContextsCmd, selectContextCmd)
+	rootCmd.AddCommand(versionCmd, loadCmd, mergeCmd, getCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %v", err)
