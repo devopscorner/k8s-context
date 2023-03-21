@@ -87,10 +87,6 @@ func getClientset(kubeconfig string) (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-const (
-	VERSION = "v0.5"
-)
-
 func main() {
 	var kubeconfig string
 	if home := homedir.HomeDir(); home != "" {
@@ -98,14 +94,6 @@ func main() {
 	}
 
 	kc := &KubeConfig{}
-
-	var versionCmd = &cobra.Command{
-		Use:   "version",
-		Short: "Print the version number of k8s-context",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("k8s-context " + VERSION)
-		},
-	}
 
 	loadCmd := &cobra.Command{
 		Use:   "load",
@@ -177,10 +165,10 @@ func main() {
 		},
 	}
 
-	rootCmd := &cobra.Command{Use: "k8s-context"}
+	rootCmd := &cobra.Command{Use: "app"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
 
-	rootCmd.AddCommand(versionCmd, loadCmd, mergeCmd, getCmd)
+	rootCmd.AddCommand(loadCmd, mergeCmd, getCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %v", err)
