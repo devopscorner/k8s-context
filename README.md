@@ -16,6 +16,8 @@ Customize Kubernetes Change Context (KUBECONFIG)
 ![stars](https://img.shields.io/github/stars/devopscorner/k8s-context)
 [![license](https://img.shields.io/github/license/devopscorner/k8s-context)](https://img.shields.io/github/license/devopscorner/k8s-context)
 
+---
+
 ## Available Tags
 
 ### Alpine
@@ -36,6 +38,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 | `devopscorner/k8s-context:go1.19-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.17) |
 | `devopscorner/k8s-context:go1.19.5-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.5-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.5-alpine3.17) |
 
+---
 
 ## K8S-Context
 
