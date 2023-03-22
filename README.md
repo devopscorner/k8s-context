@@ -40,7 +40,6 @@ Customize Kubernetes Change Context (KUBECONFIG)
 | Image name | Size |
 |------------|------|
 | `devopscorner/k8s-context:1.1.3` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.3.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.3) |
-| `devopscorner/k8s-context:alpine` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine) |
 | `devopscorner/k8s-context:alpine-3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.15) |
 | `devopscorner/k8s-context:go1.19-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.15) |
 | `devopscorner/k8s-context:go1.19.3-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.3-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.3-alpine3.15) |
@@ -171,7 +170,6 @@ Use "k8s-context [command] --help" for more information about a command.
     Select a kubeconfig file:  [Use arrows to move, type to filter]
     > /home/devopscorner/.kube/.switch_tmp/config.1072356766.tmp
     /home/devopscorner/.kube/.switch_tmp/config.3841581520.tmp
-
     ```
 
   - List Context(s) -- Interactive Mode
@@ -203,6 +201,8 @@ Use "k8s-context [command] --help" for more information about a command.
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
 
     ## Spesific Kubeconfig ##
+    ./k8s-context select -l $HOME/.kube/config-cluster
+    ---
     ? Select a context  [Use arrows to move, type to filter]
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorfner-uat-staging
