@@ -38,6 +38,15 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 ---
 
+### version 1.1.4
+
+- Fixing interactive mode for
+  - `load`
+  - `list`
+  - `select`
+
+---
+
 ### version 1.1.3
 
 - Added autocompletion script for bash, fish, powershell, zsh
