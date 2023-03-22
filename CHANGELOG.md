@@ -37,11 +37,9 @@ Customize Kubernetes Change Context (KUBECONFIG)
 | Image name | Size |
 |------------|------|
 | `devopscorner/k8s-context:1.1.3` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.3.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.3) |
-| `devopscorner/k8s-context:alpine` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine) |
 | `devopscorner/k8s-context:alpine-3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.15) |
 | `devopscorner/k8s-context:go1.19-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.15) |
 | `devopscorner/k8s-context:go1.19.3-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.3-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.3-alpine3.15) |
-
 
 ---
 
