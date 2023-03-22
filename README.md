@@ -7,7 +7,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 ![tags](https://img.shields.io/github/v/tag/devopscorner/k8s-context?sort=semver)
 [![docker pulls](https://img.shields.io/docker/pulls/devopscorner/k8s-context.svg)](https://hub.docker.com/r/devopscorner/k8s-context/)
 ![download all](https://img.shields.io/github/downloads/devopscorner/k8s-context/total.svg)
-![download latest](https://img.shields.io/github/downloads/devopscorner/k8s-context/1.1/total)
+![download latest](https://img.shields.io/github/downloads/devopscorner/k8s-context/1.1.3/total)
 ![view](https://views.whatilearened.today/views/github/devopscorner/k8s-context.svg)
 ![clone](https://img.shields.io/badge/dynamic/json?color=success&label=clone&query=count&url=https://github.com/devopscorner/k8s-context/blob/master/clone.json?raw=True&logo=github)
 ![issues](https://img.shields.io/github/issues/devopscorner/k8s-context)
@@ -22,7 +22,8 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 | Image name | Size |
 |------------|------|
-| `devopscorner/k8s-context:latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=latest) |
+| `devopscorner/k8s-context:latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=latest) ![latest-alpine](https://img.shields.io/static/v1?label=latest&message=alpine&color=orange) |
+| `devopscorner/k8s-context:1.1.3` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.3.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.3) ![latest-1.1.3](https://img.shields.io/static/v1?label=latest&message=1.1.3&color=orange) |
 | `devopscorner/k8s-context:alpine` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine) |
 | `devopscorner/k8s-context:alpine-latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-latest) |
 | `devopscorner/k8s-context:alpine-3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.15) |
@@ -36,13 +37,48 @@ Customize Kubernetes Change Context (KUBECONFIG)
 | `devopscorner/k8s-context:go1.19.5-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.5-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.5-alpine3.17) |
 
 
+## K8S-Context
+
+```
+
+ _    ___                            _            _
+| | _( _ ) ___        ___ ___  _ __ | |_ _____  _| |_
+| |/ / _ \/ __|_____ / __/ _ \| '_ \| __/ _ \ \/ / __|
+|   < (_) \__ \_____| (_| (_) | | | | ||  __/>  <| |_
+|_|\_\___/|___/      \___\___/|_| |_|\__\___/_/\_\\__|
+
+
+[[  K8S-CONTEXT  ]] - v1.1.3
+=============================
+Usage:
+  k8s-context [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  get         Get Kubernetes resources (ns, svc, deploy, po)
+  help        Help about any command
+  list        List the available contexts in the kubeconfig file
+  load        Load a kubeconfig file
+  merge       Merge multiple kubeconfig files
+  select      Select a context from the kubeconfig file
+  show        Show the current context
+  switch      Switch to a different context
+  version     Print the version number of k8s-context
+
+Flags:
+  -h, --help                help for k8s-context
+      --kubeconfig string   Path to kubeconfig file (default "/Users/devopscorner/.kube/config")
+
+Use "k8s-context [command] --help" for more information about a command.
+```
+
 ## How to Use
 
 - Clone this repository
   ```
   git clone https://github.com/devopscorner/k8s-context.git
 
-  # -- or -- #
+  -- or --
 
   git clone git@github.com:devopscorner/k8s-context.git
   ```
@@ -51,7 +87,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   ```
   make init
 
-  # -- or -- #
+  -- or --
 
   cd src
   go mod tidy
@@ -90,7 +126,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
   # Mac M1/M2 (Arm)
   make build-mac-arm
 
-  # -- or -- #
+  -- or --
 
   cd src
   GO111MODULE=$(GO111MODULE) GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -o build/$(GO_APP) $(BUILD_FLAGS) -ldflags "$(LDFLAGS)" ./main.go
@@ -102,32 +138,142 @@ Customize Kubernetes Change Context (KUBECONFIG)
   ./k8s-context
   ```
 
-- Run Spesific KUBECONFIG
+- Autocompletion Script
   ```
-  cd src/build
-
-  KUBECONFIG=$HOME/.kube/config-new-cluster
-  ./k8s-context --context=config-new-cluster
-
-  # -- or -- #
-
-  ./k8s-context --kubeconfig=$HOME/.kube/config-new-cluster --context=config-new-cluster
+  ./k8s-context completion bash|fish|powershell|zsh
   ```
 
-- Run for Amazon EKS
-  ```
-  cd src/build
+- Using Contexts
 
-  ./k8s-context --kubeconfig=${KUBECONFIG} --context=arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
+  - Merge Multi Config
+    ```
+    ./k8s-context merge [new-config] [config-1] [config-2] ... [config-n]
+    ---
+    eg: (merge into single file $HOME/.kube/config)
 
-  ./k8s-context --kubeconfig=$HOME/.kube/config-devopscorner_staging --context=arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging
-  ---
-  INFO[0000] info Successfully changed context to arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging
+    ./k8s-context merge $HOME/.kube/config  $HOME/.kube/config-staging-dev $HOME/.kube/config-staging-uat $HOME/.kube/config-staging-qa
+    ```
 
-  ./k8s-context --kubeconfig=$HOME/.kube/config-devopscorner_prod --context=arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod
-  ---
-  INFO[0000] info Successfully changed context to arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod
-  ```
+  - List Context(s)
+    ```
+    KUBECONFIG=$HOME/.kube/config
+    kubectl config get-contexts
+
+    -- or --
+
+    ./k8s-context list --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Show Context (Current Context)
+    ```
+    KUBECONFIG=$HOME/.kube/config
+    kubectl config get-contexts
+
+    -- or --
+
+    ./k8s-context show --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Run Spesific KUBECONFIG
+    ```
+    KUBECONFIG=$HOME/.kube/config-new-cluster
+    kubectl config use [cluster_name]
+
+    -- or --
+
+    ./k8s-context select [cluster_name] --kubeconfig=$HOME/.kube/config-new-cluster
+    ```
+
+  - Load Spesific KUBECONFIG (in memory)
+    ```
+    ./k8s-context load $HOME/.kube/config
+    ```
+
+  - Run for Amazon EKS
+    ```
+    KUBECONFIG=$HOME/.kube/config
+    ./k8s-context select arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
+
+    ./k8s-context select arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging --kubeconfig=$HOME/.kube/config-devopscorner_staging
+
+    ./k8s-context select arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod --kubeconfig=$HOME/.kube/config-devopscorner_prod
+    ```
+
+- Get Resources Kubernetes
+
+  - Namespaces
+    ```
+    ./k8s-context get namespace --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get ns --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Services
+    ```
+    ./k8s-context get services --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get svc --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Deployments
+    ```
+    ./k8s-context get deployments --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get deploy --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Pods
+    ```
+    ./k8s-context get pods --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get po --kubeconfig=$HOME/.kube/config
+    ```
+
+- Get Resources By Filtering Namespace (Comma-Separated)
+
+  - Namespaces
+    ```
+    ./k8s-context get namespace --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get ns --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Services
+    ```
+    ./k8s-context get services --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get svc --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Deployments
+    ```
+    ./k8s-context get deployments --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get deploy --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Pods
+    ```
+    ./k8s-context get pods --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get po --namespace=ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ```
 
 - Integrated with CI/CD `Dockerfile` Pipeline
   ```
