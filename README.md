@@ -201,6 +201,8 @@ Use "k8s-context [command] --help" for more information about a command.
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
 
     ## Spesific Kubeconfig ##
+    ./k8s-context select -l $HOME/.kube/config-cluster
+    ---
     ? Select a context  [Use arrows to move, type to filter]
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorfner-uat-staging
