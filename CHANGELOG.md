@@ -21,7 +21,8 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 | Image name | Size |
 |------------|------|
-| `devopscorner/k8s-context:latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=latest) |
+| `devopscorner/k8s-context:latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=latest) ![default-aws-cli](https://img.shields.io/static/v1?label=latest&message=default&color=brightgreen) ![latest-aws-cli](https://img.shields.io/static/v1?label=latest&message=alpine&color=orange) |
+| `devopscorner/k8s-context:1.1.3` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.3.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.3) ![latest-1.1.3](https://img.shields.io/static/v1?label=latest&message=1.1.3&color=orange) |
 | `devopscorner/k8s-context:alpine` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine) |
 | `devopscorner/k8s-context:alpine-latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-latest) |
 | `devopscorner/k8s-context:alpine-3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.15) |
@@ -34,6 +35,20 @@ Customize Kubernetes Change Context (KUBECONFIG)
 | `devopscorner/k8s-context:go1.19-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.17) |
 | `devopscorner/k8s-context:go1.19.5-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.5-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.5-alpine3.17) |
 
+
+---
+
+### version 1.1.3
+
+- Added autocompletion script for bash, fish, powershell, zsh
+- Added `merge` multi kubeconfig files
+- Added `list` context available from selected / current context
+- Added `show` current context
+- Added `select` spesific context in any path of kubeconfig files
+- Added `load` for loading config in memory
+- Added `get` resource kubernetes namespace, services, deployments, pods
+- Added filter namespace from getting resources
+- Added interactive select context
 
 ---
 
