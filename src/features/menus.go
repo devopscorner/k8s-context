@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
+	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -29,11 +30,15 @@ const (
 
 `
 	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.3"
+	VERSION = "v1.1.4"
 )
 
 var (
-	kubeconfig string
+	kubeconfig     string
+	loadFlag       string
+	selectedConfig string
+	configBytes    []byte
+	err            error
 )
 
 func GetCommands() []*cobra.Command {
@@ -52,14 +57,53 @@ func GetCommands() []*cobra.Command {
 	}
 
 	loadCmd := &cobra.Command{
-		Use:   "load",
+		Use:   "load [file...]",
 		Short: "Load a kubeconfig file",
+		Long:  "Load one or more kubeconfig files into k8s-context",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			kc.Files = args
+			var files []string
+			if len(args) == 0 {
+				home, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				kubeDir := filepath.Join(home, ".kube")
+				err = filepath.Walk(kubeDir, func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if !info.IsDir() && strings.HasPrefix(info.Name(), "config") {
+						files = append(files, path)
+					}
+					return nil
+				})
+				if err != nil {
+					return err
+				}
+			} else {
+				files = args
+			}
+
+			// Prompt the user to select a kubeconfig file if more than one is found
+			if len(files) > 1 {
+				var selected string
+				prompt := &survey.Select{
+					Message: "Select a kubeconfig file:",
+					Options: files,
+				}
+				if err := survey.AskOne(prompt, &selected); err != nil {
+					return err
+				}
+				files = []string{selected}
+			}
+
+			kc.Files = files
 			if err := kc.Load(); err != nil {
 				return err
 			}
-			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", kc.Files)
+			selectedConfig = strings.Join(kc.Files, "\n")
+			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", selectedConfig)
+
 			return nil
 		},
 	}
@@ -213,23 +257,41 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
-	listContextsCmd := &cobra.Command{
-		Use:   "list",
-		Short: "List the available contexts in the kubeconfig file",
+	var listContextsCmd = &cobra.Command{
+		Use:   "lists",
+		Short: "List all available Kubernetes contexts",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("Loading kubeconfig...")
-			if err := kc.Load(); err != nil {
+
+			// Use default kubeconfig file if load flag is not provided
+			if loadFlag == "" {
+				if selectedConfig != "" {
+					configBytes, err = os.ReadFile(selectedConfig)
+				} else {
+					configBytes, err = os.ReadFile(kubeconfig)
+				}
+				if err != nil {
+					return err
+				}
+			} else {
+				// Load kubeconfig file from flag
+				configBytes, err = os.ReadFile(loadFlag)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Get the map of context name to context config
+			config, err := clientcmd.Load(configBytes)
+			if err != nil {
 				return err
 			}
+			contextsMap := config.Contexts
 
-			fmt.Printf("Loaded kubeconfig with %d contexts\n", len(kc.Merged.Contexts))
-
-			var contextNames []string
-			for contextName := range kc.Merged.Contexts {
-				contextNames = append(contextNames, contextName)
+			// Print the list of context names
+			fmt.Println("Available Kubernetes contexts:")
+			for contextName := range contextsMap {
+				fmt.Println(contextName)
 			}
-
-			fmt.Printf("Available contexts: %v\n", contextNames)
 
 			return nil
 		},
@@ -239,12 +301,35 @@ func GetCommands() []*cobra.Command {
 		Use:   "select",
 		Short: "Select a context from the kubeconfig file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := kc.Load(); err != nil {
-				return err
+
+			home := homedir.HomeDir()
+			kubeconfig := filepath.Join(home, ".kube", "config")
+
+			// Use default kubeconfig file if load flag is not provided
+			if loadFlag == "" {
+				if selectedConfig != "" {
+					configBytes, err = os.ReadFile(selectedConfig)
+				} else {
+					configBytes, err = os.ReadFile(kubeconfig)
+				}
+				if err != nil {
+					return err
+				}
+			} else {
+				// Load kubeconfig file from flag
+				configBytes, err = os.ReadFile(loadFlag)
+				if err != nil {
+					return err
+				}
 			}
 
+			// Get the map of context name to context config
+			config, err := clientcmd.Load(configBytes)
+			if err != nil {
+				return err
+			}
 			var contextNames []string
-			for contextName := range kc.Merged.Contexts {
+			for contextName := range config.Contexts {
 				contextNames = append(contextNames, contextName)
 			}
 
@@ -260,7 +345,6 @@ func GetCommands() []*cobra.Command {
 
 			fmt.Printf("Selected context: %s\n", selectedContext)
 
-			config := kc.Merged
 			context, ok := config.Contexts[selectedContext]
 			if !ok {
 				return fmt.Errorf("context not found: %s", selectedContext)
@@ -271,14 +355,14 @@ func GetCommands() []*cobra.Command {
 				return fmt.Errorf("cluster not found: %s", context.Cluster)
 			}
 
-			auth, ok := config.AuthInfos[context.AuthInfo]
-			if !ok {
-				return fmt.Errorf("auth info not found: %s", context.AuthInfo)
-			}
+			// auth, ok := config.AuthInfos[context.AuthInfo]
+			// if !ok {
+			// 	return fmt.Errorf("auth info not found: %s", context.AuthInfo)
+			// }
 
 			fmt.Printf("Cluster server: %s\n", cluster.Server)
-			fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
-			fmt.Printf("User name: %s\n", auth.Username)
+			// fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
+			// fmt.Printf("User name: %s\n", auth.Username)
 
 			return nil
 		},
@@ -301,6 +385,8 @@ func GetCommands() []*cobra.Command {
 	}
 
 	getCmd.Flags().StringSlice("namespace", []string{}, "Namespaces to filter resources by (comma-separated)")
+	listContextsCmd.Flags().StringVarP(&loadFlag, "load", "l", "", "Load a kubeconfig file")
+	selectContextCmd.Flags().StringVarP(&loadFlag, "load", "l", "", "Load a kubeconfig file")
 
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")

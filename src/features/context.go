@@ -6,17 +6,17 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 type KubeConfig struct {
 	Files     []string
-	Merged    *api.Config
+	Merged    *clientcmdapi.Config
 	Overwrite bool
 }
 
 func (kc *KubeConfig) Load() error {
-	var configs []*api.Config
+	var configs []*clientcmdapi.Config
 	for _, file := range kc.Files {
 		loaded, err := clientcmd.LoadFromFile(file)
 		if err != nil {
@@ -36,13 +36,13 @@ func (kc *KubeConfig) SaveToFile(file string) error {
 	return clientcmd.WriteToFile(*kc.Merged, file)
 }
 
-func MergeConfigs(configs []*api.Config) (*api.Config, error) {
-	newConfig := &api.Config{
+func MergeConfigs(configs []*clientcmdapi.Config) (*clientcmdapi.Config, error) {
+	newConfig := &clientcmdapi.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
-		Clusters:   make(map[string]*api.Cluster),
-		AuthInfos:  make(map[string]*api.AuthInfo),
-		Contexts:   make(map[string]*api.Context),
+		Clusters:   make(map[string]*clientcmdapi.Cluster),
+		AuthInfos:  make(map[string]*clientcmdapi.AuthInfo),
+		Contexts:   make(map[string]*clientcmdapi.Context),
 	}
 
 	for _, config := range configs {
@@ -80,7 +80,7 @@ func GetClientSet(kubeconfig string) (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func GetCurrentContext(config *api.Config) (string, error) {
+func GetCurrentContext(config *clientcmdapi.Config) (string, error) {
 	if config == nil {
 		return "", fmt.Errorf("kubeconfig is nil")
 	}
