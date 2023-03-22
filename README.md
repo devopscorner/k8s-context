@@ -51,7 +51,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 |_|\_\___/|___/      \___\___/|_| |_|\__\___/_/\_\\__|
 
 
-[[  K8S-CONTEXT  ]] - v1.1.3
+[[  K8S-CONTEXT  ]] - v1.1.4
 =============================
 Usage:
   k8s-context [command]
@@ -157,14 +157,48 @@ Use "k8s-context [command] --help" for more information about a command.
     ./k8s-context merge $HOME/.kube/config  $HOME/.kube/config-staging-dev $HOME/.kube/config-staging-uat $HOME/.kube/config-staging-qa
     ```
 
-  - List Context(s)
+  - List All KUBECONFIG Files Inside `~/.kube` Folder -- Interactive Mode
+    ```
+    ./k8s-context load
+    ---
+    Select a kubeconfig file:  [Use arrows to move, type to filter]
+    > /home/devopscorner/.kube/.switch_tmp/config.1072356766.tmp
+    /home/devopscorner/.kube/.switch_tmp/config.3841581520.tmp
+
+    ```
+
+  - List Context(s) -- Interactive Mode
     ```
     KUBECONFIG=$HOME/.kube/config
     kubectl config get-contexts
 
     -- or --
 
-    ./k8s-context list --kubeconfig=$HOME/.kube/config
+    ## Default KUBECONFIG path (`/.kube/config`) ##
+    ./k8s-context lists
+    ---
+    arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
+
+    ## Spesific Kubeconfig ##
+    ./k8s-context lists -l $HOME/.kube/config-cluster
+    ---
+    Available Kubernetes contexts:
+    arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
+    arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-uat-staging
+    ```
+
+  - Select Context(s) -- Interactive Mode
+    ```
+    ## Default KUBECONFIG path (`/.kube/config`) ##
+    ./k8s-context select
+    ---
+    ? Select a context  [Use arrows to move, type to filter]
+    > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
+
+    ## Spesific Kubeconfig ##
+    ? Select a context  [Use arrows to move, type to filter]
+    > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
+    arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorfner-uat-staging
     ```
 
   - Show Context (Current Context)
@@ -174,7 +208,7 @@ Use "k8s-context [command] --help" for more information about a command.
 
     -- or --
 
-    ./k8s-context show --kubeconfig=$HOME/.kube/config
+    ./k8s-context show
     ```
 
   - Run Spesific KUBECONFIG
@@ -185,11 +219,6 @@ Use "k8s-context [command] --help" for more information about a command.
     -- or --
 
     ./k8s-context select [cluster_name] --kubeconfig=$HOME/.kube/config-new-cluster
-    ```
-
-  - Load Spesific KUBECONFIG (in memory)
-    ```
-    ./k8s-context load $HOME/.kube/config
     ```
 
   - Run for Amazon EKS
