@@ -7,7 +7,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 ![tags](https://img.shields.io/github/v/tag/devopscorner/k8s-context?sort=semver)
 [![docker pulls](https://img.shields.io/docker/pulls/devopscorner/k8s-context.svg)](https://hub.docker.com/r/devopscorner/k8s-context/)
 ![download all](https://img.shields.io/github/downloads/devopscorner/k8s-context/total.svg)
-![download latest](https://img.shields.io/github/downloads/devopscorner/k8s-context/1.1.3/total)
+![download latest](https://img.shields.io/github/downloads/devopscorner/k8s-context/1.1.4/total)
 ![view](https://views.whatilearened.today/views/github/devopscorner/k8s-context.svg)
 ![clone](https://img.shields.io/badge/dynamic/json?color=success&label=clone&query=count&url=https://github.com/devopscorner/k8s-context/blob/master/clone.json?raw=True&logo=github)
 ![issues](https://img.shields.io/github/issues/devopscorner/k8s-context)
@@ -25,18 +25,24 @@ Customize Kubernetes Change Context (KUBECONFIG)
 | Image name | Size |
 |------------|------|
 | `devopscorner/k8s-context:latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=latest) ![default-aws-cli](https://img.shields.io/static/v1?label=latest&message=default&color=brightgreen) ![latest-aws-cli](https://img.shields.io/static/v1?label=latest&message=alpine&color=orange) |
-| `devopscorner/k8s-context:1.1.3` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.3.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.3) ![latest-1.1.3](https://img.shields.io/static/v1?label=latest&message=1.1.3&color=orange) |
+| `devopscorner/k8s-context:1.1.4` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.4.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.4) ![latest-1.1.4](https://img.shields.io/static/v1?label=latest&message=1.1.4&color=orange) |
 | `devopscorner/k8s-context:alpine` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine) |
 | `devopscorner/k8s-context:alpine-latest` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-latest.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-latest) |
-| `devopscorner/k8s-context:alpine-3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.15) |
-| `devopscorner/k8s-context:go1.19-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.15) |
-| `devopscorner/k8s-context:go1.19.3-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.3-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.3-alpine3.15) |
 | `devopscorner/k8s-context:alpine-3.16` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.16.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.16) |
 | `devopscorner/k8s-context:go1.19-alpine3.16` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.16.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.16) |
 | `devopscorner/k8s-context:go1.19.5-alpine3.16` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.5-alpine3.16.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.5-alpine3.16) |
 | `devopscorner/k8s-context:alpine-3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.17) |
 | `devopscorner/k8s-context:go1.19-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.17) |
 | `devopscorner/k8s-context:go1.19.5-alpine3.17` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.5-alpine3.17.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.5-alpine3.17) |
+
+### Alpine (Depreciated)
+
+| Image name | Size |
+|------------|------|
+| `devopscorner/k8s-context:1.1.3` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/1.1.3.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=1.1.3) |
+| `devopscorner/k8s-context:alpine-3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/alpine-3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=alpine-3.15) |
+| `devopscorner/k8s-context:go1.19-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19-alpine3.15) |
+| `devopscorner/k8s-context:go1.19.3-alpine3.15` | [![docker image size](https://img.shields.io/docker/image-size/devopscorner/k8s-context/go1.19.3-alpine3.15.svg?label=Image%20size&logo=docker)](https://hub.docker.com/repository/docker/devopscorner/k8s-context/tags?page=1&ordering=last_updated&name=go1.19.3-alpine3.15) |
 
 ---
 
@@ -164,7 +170,6 @@ Use "k8s-context [command] --help" for more information about a command.
     Select a kubeconfig file:  [Use arrows to move, type to filter]
     > /home/devopscorner/.kube/.switch_tmp/config.1072356766.tmp
     /home/devopscorner/.kube/.switch_tmp/config.3841581520.tmp
-
     ```
 
   - List Context(s) -- Interactive Mode

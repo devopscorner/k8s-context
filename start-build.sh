@@ -12,12 +12,12 @@ export CI_PROJECT_NAME="k8s-context"
 
 export IMAGE="$CI_PROJECT_PATH/$CI_PROJECT_NAME"
 
-TAG="alpine-3.15"
-echo " Build Image => $IMAGE:$TAG"
-docker build --no-cache -f Dockerfile.alpine-3.15 -t $IMAGE:$TAG .
-docker tag $IMAGE:$TAG $IMAGE:go1.19-alpine3.15
-docker tag $IMAGE:$TAG $IMAGE:go1.19.3-alpine3.15
-echo ""
+# TAG="alpine-3.15"
+# echo " Build Image => $IMAGE:$TAG"
+# docker build --no-cache -f Dockerfile.alpine-3.15 -t $IMAGE:$TAG .
+# docker tag $IMAGE:$TAG $IMAGE:go1.19-alpine3.15
+# docker tag $IMAGE:$TAG $IMAGE:go1.19.3-alpine3.15
+# echo ""
 
 TAG="alpine-3.16"
 echo " Build Image => $IMAGE:$TAG"
@@ -34,7 +34,7 @@ docker tag $IMAGE:$TAG $IMAGE:go1.19.5-alpine3.17
 docker tag $IMAGE:$TAG $IMAGE:alpine
 docker tag $IMAGE:$TAG $IMAGE:alpine-latest
 docker tag $IMAGE:$TAG $IMAGE:latest
-docker tag $IMAGE:$TAG $IMAGE:1.1.3
+docker tag $IMAGE:$TAG $IMAGE:1.1.4
 echo ""
 
 echo "Cleanup Unknown Tags"
