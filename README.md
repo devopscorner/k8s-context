@@ -171,7 +171,6 @@ Use "k8s-context [command] --help" for more information about a command.
     Select a kubeconfig file:  [Use arrows to move, type to filter]
     > /home/devopscorner/.kube/.switch_tmp/config.1072356766.tmp
     /home/devopscorner/.kube/.switch_tmp/config.3841581520.tmp
-
     ```
 
   - List Context(s) -- Interactive Mode
