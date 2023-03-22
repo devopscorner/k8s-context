@@ -15,6 +15,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -33,7 +34,7 @@ const (
 
 `
 	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.1"
+	VERSION = "v1.1.3"
 )
 
 var (
@@ -110,7 +111,8 @@ func GetCommands() []*cobra.Command {
 
 	getCmd := &cobra.Command{
 		Use:   "get",
-		Short: "Get kubernetes resources",
+		Short: "Get Kubernetes resources (ns, svc, deploy, po)",
+		Long:  "Get Kubernetes resources: namespace (ns), services (svc), deployments (deploy), pods (po)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return fmt.Errorf("resource type not specified")
@@ -121,183 +123,114 @@ func GetCommands() []*cobra.Command {
 				return err
 			}
 
-			ctx := context.Background() // add context here
+			ctx := context.Background()
 			resource := args[0]
 
-			switch resource {
+			namespaces, err := cmd.Flags().GetStringSlice("namespace")
+			if err != nil {
+				return err
+			}
 
-			case "pods", "po":
-				namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+			if len(namespaces) == 0 {
+				// If namespace is not specified, get all namespaces
+				nsList, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return err
 				}
+				for _, ns := range nsList.Items {
+					namespace := ns.Name
+					fmt.Printf("Namespace: %s\n", namespace)
+					switch resource {
 
-				for _, ns := range namespaces.Items {
-					fmt.Printf("Namespace: %s\n", ns.Name)
-					pods, err := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
-					if err != nil {
-						return err
-					}
-
-					table := tablewriter.NewWriter(os.Stdout)
-					// table.SetHeader([]string{"POD NAME", "READY", "STATUS", "RESTARTS", "AGE", "IMAGE", "NODE", "OWNER KIND", "OWNER NAME", "LABELS"})
-					table.SetHeader([]string{
-						"POD NAME",
-						"READY",
-						"STATUS",
-						"RESTARTS",
-						"AGE",
-						"IMAGE",
-					})
-
-					table.SetAutoFormatHeaders(false)
-					table.SetAutoWrapText(false)
-
-					for _, pod := range pods.Items {
-						var containerStatuses []string
-						for _, cs := range pod.Status.ContainerStatuses {
-							containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
+					case "pods", "po":
+						pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
 						}
-						ready, total := CalculateReadiness(&pod)
-						age := HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
-						image := strings.Join(GetContainerImages(&pod), ", ")
-						// node := pod.Spec.NodeName
-						// ownerKind, ownerName := GetOwnerKindAndName(&pod)
-						// labels := strings.Join(GetLabels(&pod), ", ")
+						ShowPodsByFilter(pods)
 
-						table.Append([]string{
-							pod.Name,
-							fmt.Sprintf("%d/%d", ready, total),
-							string(pod.Status.Phase),
-							strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
-							age,
-							image,
-							// node,
-							// ownerKind,
-							// ownerName,
-							// labels,
-						})
-					}
-					table.Render()
-				}
-
-			case "namespaces", "ns":
-				namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					return err
-				}
-
-				table := tablewriter.NewWriter(os.Stdout)
-				table.SetHeader([]string{
-					// "NAMESPACE",
-					"NAME",
-					"STATUS",
-					"AGE",
-				})
-				table.SetAutoFormatHeaders(false)
-				table.SetAutoWrapText(false)
-
-				for _, ns := range namespaces.Items {
-					// namespace := ns.ObjectMeta.Namespace
-					name := ns.ObjectMeta.Name
-					status := ns.Status.Phase
-					age := HumanReadableDuration(time.Since(ns.ObjectMeta.CreationTimestamp.Time))
-
-					table.Append([]string{
-						// namespace,
-						name,
-						string(status),
-						age,
-					})
-				}
-				table.Render()
-
-			case "services", "svc":
-				namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					return err
-				}
-
-				for _, ns := range namespaces.Items {
-					fmt.Printf("Namespace: %s\n", ns.Name)
-					services, err := clientset.CoreV1().Services(ns.Name).List(ctx, metav1.ListOptions{})
-					if err != nil {
-						return err
-					}
-
-					table := tablewriter.NewWriter(os.Stdout)
-					table.SetHeader([]string{"NAME", "TYPE", "CLUSTER-IP", "EXTERNAL-IP", "PORT(S)", "AGE"})
-
-					table.SetAutoFormatHeaders(false)
-					table.SetAutoWrapText(false)
-
-					for _, service := range services.Items {
-						var externalIPs string
-						if len(service.Spec.ExternalIPs) > 0 {
-							externalIPs = strings.Join(service.Spec.ExternalIPs, ", ")
+					case "namespaces", "ns":
+						var namespaces *corev1.NamespaceList
+						if namespace != "" {
+							ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+							if err != nil {
+								return err
+							}
+							namespaces = &corev1.NamespaceList{Items: []corev1.Namespace{*ns}}
 						} else {
-							externalIPs = "<none>"
+							ns, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+							if err != nil {
+								return err
+							}
+							namespaces = ns
 						}
-						age := HumanReadableDuration(time.Since(service.ObjectMeta.CreationTimestamp.Time))
-						ports := make([]string, len(service.Spec.Ports))
-						for i, port := range service.Spec.Ports {
-							ports[i] = fmt.Sprintf("%d/%s", port.Port, string(port.Protocol))
+						ShowNamespaceByFilter(namespaces)
+
+					case "services", "svc":
+						services, err := clientset.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
 						}
+						ShowServiceByFilter(services)
 
-						table.Append([]string{
-							service.Name,
-							string(service.Spec.Type),
-							service.Spec.ClusterIP,
-							externalIPs,
-							strings.Join(ports, ", "),
-							age,
-						})
+					case "deployment", "deploy":
+						deployments, err := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
+						}
+						ShowDeploymentByFilter(deployments)
+
+					default:
+						return fmt.Errorf("unknown resource type: %s", resource)
 					}
-					table.Render()
 				}
+			} else {
+				// If namespace is specified, get resources only in those namespaces
+				for _, namespace := range namespaces {
+					fmt.Printf("Namespace: %s\n", namespace)
+					switch resource {
+					case "pods", "po":
+						pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
+						}
+						ShowPodsByFilter(pods)
 
-			case "deployments", "deploy":
-				namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					return err
-				}
+					case "namespaces", "ns":
+						var namespaces *corev1.NamespaceList
+						if namespace != "" {
+							ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+							if err != nil {
+								return err
+							}
+							namespaces = &corev1.NamespaceList{Items: []corev1.Namespace{*ns}}
+						} else {
+							ns, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+							if err != nil {
+								return err
+							}
+							namespaces = ns
+						}
+						ShowNamespaceByFilter(namespaces)
 
-				for _, ns := range namespaces.Items {
-					fmt.Printf("Namespace: %s\n", ns.Name)
-					deployments, err := clientset.AppsV1().Deployments(ns.Name).List(ctx, metav1.ListOptions{})
-					if err != nil {
-						return err
+					case "services", "svc":
+						services, err := clientset.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
+						}
+						ShowServiceByFilter(services)
+
+					case "deployment", "deploy":
+						deployments, err := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
+						}
+						ShowDeploymentByFilter(deployments)
+
+					default:
+						return fmt.Errorf("unknown resource type: %s", resource)
 					}
-
-					table := tablewriter.NewWriter(os.Stdout)
-					table.SetHeader([]string{
-						"NAME",
-						"READY",
-						"UP-TO-DATE",
-						"AVAILABLE",
-						"AGE",
-					})
-
-					table.SetAutoFormatHeaders(false)
-					table.SetAutoWrapText(false)
-
-					for _, deploy := range deployments.Items {
-						name := deploy.Name
-						age := HumanReadableDuration(time.Since(deploy.ObjectMeta.CreationTimestamp.Time))
-
-						table.Append([]string{
-							name,
-							fmt.Sprintf("%d/%d", deploy.Status.ReadyReplicas, deploy.Status.Replicas),
-							fmt.Sprintf("%d", deploy.Status.UpdatedReplicas),
-							fmt.Sprintf("%d", deploy.Status.AvailableReplicas),
-							age,
-						})
-					}
-					table.Render()
 				}
-
-			default:
-				return fmt.Errorf("unknown resource type: %s", resource)
 			}
 
 			return nil
@@ -391,7 +324,7 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
-	getCmd.Flags().String("namespace", "", "Namespace to filter by")
+	getCmd.Flags().StringSlice("namespace", []string{}, "Namespaces to filter resources by (comma-separated)")
 
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
@@ -403,6 +336,132 @@ func GetCommands() []*cobra.Command {
 	}
 
 	return []*cobra.Command{versionCmd, loadCmd, mergeCmd, getCmd, listContextsCmd, selectContextCmd, switchContextCmd, showContextCmd}
+}
+
+func ShowPodsByFilter(pods *corev1.PodList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"POD NAME",
+		"READY",
+		"STATUS",
+		"RESTARTS",
+		"AGE",
+		"IMAGE",
+	})
+
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, pod := range pods.Items {
+		var containerStatuses []string
+		for _, cs := range pod.Status.ContainerStatuses {
+			containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
+		}
+		ready, total := CalculateReadiness(&pod)
+		age := HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
+		image := strings.Join(GetContainerImages(&pod), ", ")
+
+		table.Append([]string{
+			pod.Name,
+			fmt.Sprintf("%d/%d", ready, total),
+			string(pod.Status.Phase),
+			strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
+			age,
+			image,
+		})
+	}
+	table.Render()
+}
+
+func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"NAME",
+		"STATUS",
+		"AGE",
+	})
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, ns := range namespaces.Items {
+		name := ns.ObjectMeta.Name
+		status := ns.Status.Phase
+		age := HumanReadableDuration(time.Since(ns.ObjectMeta.CreationTimestamp.Time))
+
+		table.Append([]string{
+			name,
+			string(status),
+			age,
+		})
+	}
+	table.Render()
+}
+
+func ShowServiceByFilter(services *corev1.ServiceList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"NAME",
+		"TYPE",
+		"CLUSTER-IP",
+		"EXTERNAL-IP",
+		"PORT(S)",
+		"AGE",
+	})
+
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, service := range services.Items {
+		var externalIPs string
+		if len(service.Spec.ExternalIPs) > 0 {
+			externalIPs = strings.Join(service.Spec.ExternalIPs, ", ")
+		} else {
+			externalIPs = "<none>"
+		}
+		age := HumanReadableDuration(time.Since(service.ObjectMeta.CreationTimestamp.Time))
+		ports := make([]string, len(service.Spec.Ports))
+		for i, port := range service.Spec.Ports {
+			ports[i] = fmt.Sprintf("%d/%s", port.Port, string(port.Protocol))
+		}
+
+		table.Append([]string{
+			service.Name,
+			string(service.Spec.Type),
+			service.Spec.ClusterIP,
+			externalIPs,
+			strings.Join(ports, ", "),
+			age,
+		})
+	}
+	table.Render()
+}
+
+func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"NAME",
+		"READY",
+		"UP-TO-DATE",
+		"AVAILABLE",
+		"AGE",
+	})
+
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, deploy := range deployments.Items {
+		name := deploy.Name
+		age := HumanReadableDuration(time.Since(deploy.ObjectMeta.CreationTimestamp.Time))
+
+		table.Append([]string{
+			name,
+			fmt.Sprintf("%d/%d", deploy.Status.ReadyReplicas, deploy.Status.Replicas),
+			fmt.Sprintf("%d", deploy.Status.UpdatedReplicas),
+			fmt.Sprintf("%d", deploy.Status.AvailableReplicas),
+			age,
+		})
+	}
+	table.Render()
 }
 
 // -----------
