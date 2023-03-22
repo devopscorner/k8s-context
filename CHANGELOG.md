@@ -37,6 +37,20 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 ---
 
+### version 1.1.3
+
+- Added autocompletion script for bash, fish, powershell, zsh
+- Added `merge` multi kubeconfig files
+- Added `list` context available from selected / current context
+- Added `show` current context
+- Added `select` spesific context in any path of kubeconfig files
+- Added `load` for loading config in memory
+- Added `get` resource kubernetes namespace, services, deployments, pods
+- Added filter namespace from getting resources
+- Added interactive select context
+
+---
+
 ### version 1.1
 
 - Change dependencies container "FROM", using `nginx:1.23-alpine`
