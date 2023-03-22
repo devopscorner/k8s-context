@@ -204,14 +204,7 @@ func GetCommands() []*cobra.Command {
 					}
 
 					table := tablewriter.NewWriter(os.Stdout)
-					table.SetHeader([]string{
-						"NAME",
-						"TYPE",
-						"CLUSTER-IP",
-						"EXTERNAL-IP",
-						"PORT(S)",
-						"AGE",
-					})
+					table.SetHeader([]string{"NAME", "TYPE", "CLUSTER-IP", "EXTERNAL-IP", "PORT(S)", "AGE"})
 
 					table.SetAutoFormatHeaders(false)
 					table.SetAutoWrapText(false)
@@ -235,48 +228,6 @@ func GetCommands() []*cobra.Command {
 							service.Spec.ClusterIP,
 							externalIPs,
 							strings.Join(ports, ", "),
-							age,
-						})
-					}
-					table.Render()
-				}
-
-			case "deployment":
-			case "deploy":
-				namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					return err
-				}
-
-				for _, ns := range namespaces.Items {
-
-					fmt.Printf("Namespace: %s\n", ns.Name)
-					deployments, err := clientset.AppsV1().Deployments(ns.Name).List(ctx, metav1.ListOptions{})
-					if err != nil {
-						return err
-					}
-
-					table := tablewriter.NewWriter(os.Stdout)
-					table.SetHeader([]string{
-						"NAME",
-						"READY",
-						"UP-TO-DATE",
-						"AVAILABLE",
-						"AGE",
-					})
-
-					table.SetAutoFormatHeaders(false)
-					table.SetAutoWrapText(false)
-
-					for _, deploy := range deployments.Items {
-						name := deploy.Name
-						age := HumanReadableDuration(time.Since(deploy.ObjectMeta.CreationTimestamp.Time))
-
-						table.Append([]string{
-							name,
-							fmt.Sprintf("%d/%d", deploy.Status.ReadyReplicas, deploy.Status.Replicas),
-							fmt.Sprintf("%d", deploy.Status.UpdatedReplicas),
-							fmt.Sprintf("%d", deploy.Status.AvailableReplicas),
 							age,
 						})
 					}

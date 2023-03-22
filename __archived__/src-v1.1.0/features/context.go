@@ -3,7 +3,6 @@ package features
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -107,56 +106,5 @@ func ListContexts(kc *KubeConfig) error {
 		}
 		fmt.Printf("%s %s\n", prefix, contextName)
 	}
-	return nil
-}
-
-func SwitchContext(kc *KubeConfig) error {
-	if err := kc.Load(); err != nil {
-		return err
-	}
-
-	var contextNames []string
-	for contextName := range kc.Merged.Contexts {
-		contextNames = append(contextNames, contextName)
-	}
-
-	var selectedContext string
-	prompt := &survey.Select{
-		Message: "Select a context",
-		Options: contextNames,
-	}
-
-	if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
-		return err
-	}
-
-	config := kc.Merged
-	_, ok := config.Contexts[selectedContext]
-	if !ok {
-		return fmt.Errorf("context not found: %s", selectedContext)
-	}
-
-	config.CurrentContext = selectedContext
-	if err := kc.SaveToFile(kubeconfig); err != nil {
-		return err
-	}
-
-	fmt.Printf("Switched to context: %s\n", selectedContext)
-
-	return nil
-}
-
-func ShowContext(kc *KubeConfig) error {
-	if err := kc.Load(); err != nil {
-		return err
-	}
-
-	currentContext, err := GetCurrentContext(kc.Merged)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Current context: %s\n", currentContext)
-
 	return nil
 }
