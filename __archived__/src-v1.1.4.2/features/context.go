@@ -6,6 +6,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -37,7 +38,7 @@ func (kc *KubeConfig) SaveToFile(file string) error {
 }
 
 func MergeConfigs(configs []*clientcmdapi.Config) (*clientcmdapi.Config, error) {
-	newConfig := &clientcmdapi.Config{
+	newConfig := &api.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
 		Clusters:   make(map[string]*clientcmdapi.Cluster),

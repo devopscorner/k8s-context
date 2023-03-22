@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -38,16 +38,12 @@ const (
 )
 
 var (
-	kubeconfig     string
-	loadFlag       string
-	selectedConfig string
-	configBytes    []byte
-	err            error
+	kubeconfig string
 )
 
 type KubeConfig struct {
 	Files     []string
-	Merged    *clientcmdapi.Config
+	Merged    *api.Config
 	Overwrite bool
 }
 
@@ -80,53 +76,14 @@ func GetCommands() []*cobra.Command {
 	}
 
 	loadCmd := &cobra.Command{
-		Use:   "load [file...]",
+		Use:   "load",
 		Short: "Load a kubeconfig file",
-		Long:  "Load one or more kubeconfig files into k8s-context",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var files []string
-			if len(args) == 0 {
-				home, err := os.UserHomeDir()
-				if err != nil {
-					return err
-				}
-				kubeDir := filepath.Join(home, ".kube")
-				err = filepath.Walk(kubeDir, func(path string, info os.FileInfo, err error) error {
-					if err != nil {
-						return err
-					}
-					if !info.IsDir() && strings.HasPrefix(info.Name(), "config") {
-						files = append(files, path)
-					}
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-			} else {
-				files = args
-			}
-
-			// Prompt the user to select a kubeconfig file if more than one is found
-			if len(files) > 1 {
-				var selected string
-				prompt := &survey.Select{
-					Message: "Select a kubeconfig file:",
-					Options: files,
-				}
-				if err := survey.AskOne(prompt, &selected); err != nil {
-					return err
-				}
-				files = []string{selected}
-			}
-
-			kc.Files = files
+			kc.Files = args
 			if err := kc.Load(); err != nil {
 				return err
 			}
-			selectedConfig = strings.Join(kc.Files, "\n")
-			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", selectedConfig)
-
+			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", kc.Files)
 			return nil
 		},
 	}
@@ -280,41 +237,23 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
-	var listContextsCmd = &cobra.Command{
-		Use:   "lists",
-		Short: "List all available Kubernetes contexts",
+	listContextsCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List the available contexts in the kubeconfig file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			// Use default kubeconfig file if load flag is not provided
-			if loadFlag == "" {
-				if selectedConfig != "" {
-					configBytes, err = os.ReadFile(selectedConfig)
-				} else {
-					configBytes, err = os.ReadFile(kubeconfig)
-				}
-				if err != nil {
-					return err
-				}
-			} else {
-				// Load kubeconfig file from flag
-				configBytes, err = os.ReadFile(loadFlag)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Get the map of context name to context config
-			config, err := clientcmd.Load(configBytes)
-			if err != nil {
+			fmt.Println("Loading kubeconfig...")
+			if err := kc.Load(); err != nil {
 				return err
 			}
-			contextsMap := config.Contexts
 
-			// Print the list of context names
-			fmt.Println("Available Kubernetes contexts:")
-			for contextName := range contextsMap {
-				fmt.Println(contextName)
+			fmt.Printf("Loaded kubeconfig with %d contexts\n", len(kc.Merged.Contexts))
+
+			var contextNames []string
+			for contextName := range kc.Merged.Contexts {
+				contextNames = append(contextNames, contextName)
 			}
+
+			fmt.Printf("Available contexts: %v\n", contextNames)
 
 			return nil
 		},
@@ -324,35 +263,12 @@ func GetCommands() []*cobra.Command {
 		Use:   "select",
 		Short: "Select a context from the kubeconfig file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			home := homedir.HomeDir()
-			kubeconfig := filepath.Join(home, ".kube", "config")
-
-			// Use default kubeconfig file if load flag is not provided
-			if loadFlag == "" {
-				if selectedConfig != "" {
-					configBytes, err = os.ReadFile(selectedConfig)
-				} else {
-					configBytes, err = os.ReadFile(kubeconfig)
-				}
-				if err != nil {
-					return err
-				}
-			} else {
-				// Load kubeconfig file from flag
-				configBytes, err = os.ReadFile(loadFlag)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Get the map of context name to context config
-			config, err := clientcmd.Load(configBytes)
-			if err != nil {
+			if err := kc.Load(); err != nil {
 				return err
 			}
+
 			var contextNames []string
-			for contextName := range config.Contexts {
+			for contextName := range kc.Merged.Contexts {
 				contextNames = append(contextNames, contextName)
 			}
 
@@ -368,6 +284,7 @@ func GetCommands() []*cobra.Command {
 
 			fmt.Printf("Selected context: %s\n", selectedContext)
 
+			config := kc.Merged
 			context, ok := config.Contexts[selectedContext]
 			if !ok {
 				return fmt.Errorf("context not found: %s", selectedContext)
@@ -378,14 +295,14 @@ func GetCommands() []*cobra.Command {
 				return fmt.Errorf("cluster not found: %s", context.Cluster)
 			}
 
-			// auth, ok := config.AuthInfos[context.AuthInfo]
-			// if !ok {
-			// 	return fmt.Errorf("auth info not found: %s", context.AuthInfo)
-			// }
+			auth, ok := config.AuthInfos[context.AuthInfo]
+			if !ok {
+				return fmt.Errorf("auth info not found: %s", context.AuthInfo)
+			}
 
 			fmt.Printf("Cluster server: %s\n", cluster.Server)
-			// fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
-			// fmt.Printf("User name: %s\n", auth.Username)
+			fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
+			fmt.Printf("User name: %s\n", auth.Username)
 
 			return nil
 		},
@@ -408,8 +325,6 @@ func GetCommands() []*cobra.Command {
 	}
 
 	getCmd.Flags().StringSlice("namespace", []string{}, "Namespaces to filter resources by (comma-separated)")
-	listContextsCmd.Flags().StringVarP(&loadFlag, "load", "l", "", "Load a kubeconfig file")
-	selectContextCmd.Flags().StringVarP(&loadFlag, "load", "l", "", "Load a kubeconfig file")
 
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
@@ -420,7 +335,7 @@ func GetCommands() []*cobra.Command {
 		logrus.Fatalf("error executing command: %v", err)
 	}
 
-	return []*cobra.Command{versionCmd, loadCmd, mergeCmd, getCmd, listContextsCmd, selectContextCmd}
+	return []*cobra.Command{versionCmd, loadCmd, mergeCmd, getCmd, listContextsCmd, selectContextCmd, switchContextCmd, showContextCmd}
 }
 
 func ShowPodsByFilter(pods *corev1.PodList) {
@@ -553,7 +468,7 @@ func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
 // context.go
 // -----------
 func (kc *KubeConfig) Load() error {
-	var configs []*clientcmdapi.Config
+	var configs []*api.Config
 	for _, file := range kc.Files {
 		loaded, err := clientcmd.LoadFromFile(file)
 		if err != nil {
@@ -573,13 +488,13 @@ func (kc *KubeConfig) SaveToFile(file string) error {
 	return clientcmd.WriteToFile(*kc.Merged, file)
 }
 
-func MergeConfigs(configs []*clientcmdapi.Config) (*clientcmdapi.Config, error) {
-	newConfig := &clientcmdapi.Config{
+func MergeConfigs(configs []*api.Config) (*api.Config, error) {
+	newConfig := &api.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
-		Clusters:   make(map[string]*clientcmdapi.Cluster),
-		AuthInfos:  make(map[string]*clientcmdapi.AuthInfo),
-		Contexts:   make(map[string]*clientcmdapi.Context),
+		Clusters:   make(map[string]*api.Cluster),
+		AuthInfos:  make(map[string]*api.AuthInfo),
+		Contexts:   make(map[string]*api.Context),
 	}
 
 	for _, config := range configs {
@@ -617,7 +532,7 @@ func GetClientSet(kubeconfig string) (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func GetCurrentContext(config *clientcmdapi.Config) (string, error) {
+func GetCurrentContext(config *api.Config) (string, error) {
 	if config == nil {
 		return "", fmt.Errorf("kubeconfig is nil")
 	}
@@ -699,7 +614,7 @@ func ShowContext(kc *KubeConfig) error {
 }
 
 // -----------
-// pods.go
+// context.go
 // -----------
 func GetContainerImages(pod *corev1.Pod) []string {
 	var images []string
