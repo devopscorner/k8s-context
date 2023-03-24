@@ -58,7 +58,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 |_|\_\___/|___/      \___\___/|_| |_|\__\___/_/\_\\__|
 
 
-[[  K8S-CONTEXT  ]] - v1.1.4
+[[  K8S-CONTEXT  ]] - v1.1.5
 =============================
 Usage:
   k8s-context [command]
