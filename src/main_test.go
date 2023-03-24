@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 var (
@@ -31,18 +31,18 @@ func TestLoad(t *testing.T) {
 		defer os.Remove(tempFile.Name())
 
 		testConfig := &api.Config{
-			AuthInfos: map[string]*api.AuthInfo{
+			AuthInfos: map[string]*clientcmdapi.AuthInfo{
 				"test-user": {
 					Username: "test-username",
 					Password: "test-password",
 				},
 			},
-			Clusters: map[string]*api.Cluster{
+			Clusters: map[string]*clientcmdapi.Cluster{
 				"test-cluster": {
 					Server: "https://test-server:1234",
 				},
 			},
-			Contexts: map[string]*api.Context{
+			Contexts: map[string]*clientcmdapi.Context{
 				"test-context": {
 					AuthInfo:  "test-user",
 					Cluster:   "test-cluster",
@@ -80,20 +80,20 @@ func TestLoad(t *testing.T) {
 		}
 		defer os.RemoveAll(tempDir)
 
-		testConfigs := []*api.Config{
+		testConfigs := []*clientcmdapi.Config{
 			{
-				AuthInfos: map[string]*api.AuthInfo{
+				AuthInfos: map[string]*clientcmdapi.AuthInfo{
 					"test-user1": {
 						Username: "test-username1",
 						Password: "test-password1",
 					},
 				},
-				Clusters: map[string]*api.Cluster{
+				Clusters: map[string]*clientcmdapi.Cluster{
 					"test-cluster1": {
 						Server: "https://test-server1:1234",
 					},
 				},
-				Contexts: map[string]*api.Context{
+				Contexts: map[string]*clientcmdapi.Context{
 					"test-context1": {
 						AuthInfo:  "test-user1",
 						Cluster:   "test-cluster1",
@@ -105,18 +105,18 @@ func TestLoad(t *testing.T) {
 				APIVersion:     "v1",
 			},
 			{
-				AuthInfos: map[string]*api.AuthInfo{
+				AuthInfos: map[string]*clientcmdapi.AuthInfo{
 					"test-user2": {
 						Username: "test-username2",
 						Password: "test-password2",
 					},
 				},
-				Clusters: map[string]*api.Cluster{
+				Clusters: map[string]*clientcmdapi.Cluster{
 					"test-cluster2": {
 						Server: "https://test-server2:1234",
 					},
 				},
-				Contexts: map[string]*api.Context{
+				Contexts: map[string]*clientcmdapi.Context{
 					"test-context2": {
 						AuthInfo:  "test-user2",
 						Cluster:   "test-cluster2",
@@ -171,18 +171,18 @@ func TestSaveToFile(t *testing.T) {
 
 	kc := &features.KubeConfig{
 		Merged: &api.Config{
-			AuthInfos: map[string]*api.AuthInfo{
+			AuthInfos: map[string]*clientcmdapi.AuthInfo{
 				"test-user": {
 					Username: "test-username",
 					Password: "test-password",
 				},
 			},
-			Clusters: map[string]*api.Cluster{
+			Clusters: map[string]*clientcmdapi.Cluster{
 				"test-cluster": {
 					Server: "https://test-server:1234",
 				},
 			},
-			Contexts: map[string]*api.Context{
+			Contexts: map[string]*clientcmdapi.Context{
 				"test-context": {
 					AuthInfo:  "test-user",
 					Cluster:   "test-cluster",
@@ -214,18 +214,18 @@ func TestGetPods(t *testing.T) {
 
 	kc := &features.KubeConfig{
 		Merged: &api.Config{
-			AuthInfos: map[string]*api.AuthInfo{
+			AuthInfos: map[string]*clientcmdapi.AuthInfo{
 				"test-user": {
 					Username: "test-username",
 					Password: "test-password",
 				},
 			},
-			Clusters: map[string]*api.Cluster{
+			Clusters: map[string]*clientcmdapi.Cluster{
 				"test-cluster": {
 					Server: "https://test-server:1234",
 				},
 			},
-			Contexts: map[string]*api.Context{
+			Contexts: map[string]*clientcmdapi.Context{
 				"test-context": {
 					AuthInfo:  "test-user",
 					Cluster:   "test-cluster",
