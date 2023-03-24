@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
+	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/muesli/termenv"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
@@ -34,12 +36,12 @@ const (
 
 `
 	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.3"
+	VERSION = "v1.1.5"
 )
 
 var (
 	kubeconfig     string
-	loadFlag       string
+	loadFile       string
 	selectedConfig string
 	configBytes    []byte
 	err            error
@@ -61,9 +63,9 @@ func main() {
 	GetCommands()
 }
 
-// -----------
+// -------------------------------------------------------------------
 // menus.go
-// -----------
+// -------------------------------------------------------------------
 func GetCommands() []*cobra.Command {
 	if home := homedir.HomeDir(); home != "" {
 		kubeconfig = filepath.Join(home, ".kube", "config")
@@ -76,6 +78,46 @@ func GetCommands() []*cobra.Command {
 		Short: "Print the version number of k8s-context",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("k8s-context " + VERSION)
+		},
+	}
+
+	listContextsCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all available Kubernetes contexts",
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			// Use default kubeconfig file if load flag is not provided
+			if loadFile == "" {
+				if selectedConfig != "" {
+					configBytes, err = os.ReadFile(selectedConfig)
+				} else {
+					configBytes, err = os.ReadFile(kubeconfig)
+				}
+				if err != nil {
+					return err
+				}
+			} else {
+				// Load kubeconfig file from flag
+				configBytes, err = os.ReadFile(loadFile)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Get the map of context name to context config
+			config, err := clientcmd.Load(configBytes)
+			if err != nil {
+				return err
+			}
+			contextsMap := config.Contexts
+
+			// Print the list of context names
+			fmt.Println("Available Kubernetes contexts:")
+			for contextName := range contextsMap {
+				fmt.Println(contextName)
+			}
+
+			return nil
 		},
 	}
 
@@ -126,6 +168,20 @@ func GetCommands() []*cobra.Command {
 			}
 			selectedConfig = strings.Join(kc.Files, "\n")
 			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", selectedConfig)
+
+			// Get the map of context name to context config
+			configBytes, err = os.ReadFile(selectedConfig)
+			config, err := clientcmd.Load(configBytes)
+			if err != nil {
+				return err
+			}
+			contextsMap := config.Contexts
+
+			// Print the list of context names
+			fmt.Println("\nAvailable Kubernetes contexts:")
+			for contextName := range contextsMap {
+				fmt.Println(contextName)
+			}
 
 			return nil
 		},
@@ -280,56 +336,16 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
-	var listContextsCmd = &cobra.Command{
-		Use:   "lists",
-		Short: "List all available Kubernetes contexts",
-		RunE: func(cmd *cobra.Command, args []string) error {
-
-			// Use default kubeconfig file if load flag is not provided
-			if loadFlag == "" {
-				if selectedConfig != "" {
-					configBytes, err = os.ReadFile(selectedConfig)
-				} else {
-					configBytes, err = os.ReadFile(kubeconfig)
-				}
-				if err != nil {
-					return err
-				}
-			} else {
-				// Load kubeconfig file from flag
-				configBytes, err = os.ReadFile(loadFlag)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Get the map of context name to context config
-			config, err := clientcmd.Load(configBytes)
-			if err != nil {
-				return err
-			}
-			contextsMap := config.Contexts
-
-			// Print the list of context names
-			fmt.Println("Available Kubernetes contexts:")
-			for contextName := range contextsMap {
-				fmt.Println(contextName)
-			}
-
-			return nil
-		},
-	}
-
-	selectContextCmd := &cobra.Command{
-		Use:   "select",
-		Short: "Select a context from the kubeconfig file",
+	switchContextCmd := &cobra.Command{
+		Use:   "switch",
+		Short: "Switch to different context",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			home := homedir.HomeDir()
 			kubeconfig := filepath.Join(home, ".kube", "config")
 
 			// Use default kubeconfig file if load flag is not provided
-			if loadFlag == "" {
+			if loadFile == "" {
 				if selectedConfig != "" {
 					configBytes, err = os.ReadFile(selectedConfig)
 				} else {
@@ -340,7 +356,7 @@ func GetCommands() []*cobra.Command {
 				}
 			} else {
 				// Load kubeconfig file from flag
-				configBytes, err = os.ReadFile(loadFlag)
+				configBytes, err = os.ReadFile(loadFile)
 				if err != nil {
 					return err
 				}
@@ -387,171 +403,35 @@ func GetCommands() []*cobra.Command {
 			// fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
 			// fmt.Printf("User name: %s\n", auth.Username)
 
+			if loadFile == "" {
+				ChangeKubeconfigContext(kubeconfig, context.Cluster)
+			} else {
+				ChangeKubeconfigContext(loadFile, context.Cluster)
+			}
+
 			return nil
 		},
 	}
 
-	switchContextCmd := &cobra.Command{
-		Use:   "switch",
-		Short: "Switch to a different context",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return SwitchContext(kc)
-		},
-	}
-
-	showContextCmd := &cobra.Command{
-		Use:   "show",
-		Short: "Show the current context",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return ShowContext(kc)
-		},
-	}
-
 	getCmd.Flags().StringSlice("namespace", []string{}, "Namespaces to filter resources by (comma-separated)")
-	listContextsCmd.Flags().StringVarP(&loadFlag, "load", "l", "", "Load a kubeconfig file")
-	selectContextCmd.Flags().StringVarP(&loadFlag, "load", "l", "", "Load a kubeconfig file")
+	listContextsCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
+	switchContextCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
 
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
 
-	rootCmd.AddCommand(versionCmd, loadCmd, mergeCmd, getCmd, listContextsCmd, selectContextCmd, switchContextCmd, showContextCmd)
+	rootCmd.AddCommand(versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, switchContextCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %v", err)
 	}
 
-	return []*cobra.Command{versionCmd, loadCmd, mergeCmd, getCmd, listContextsCmd, selectContextCmd}
+	return []*cobra.Command{versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, switchContextCmd}
 }
 
-func ShowPodsByFilter(pods *corev1.PodList) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
-		"POD NAME",
-		"READY",
-		"STATUS",
-		"RESTARTS",
-		"AGE",
-		"IMAGE",
-	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-
-	for _, pod := range pods.Items {
-		var containerStatuses []string
-		for _, cs := range pod.Status.ContainerStatuses {
-			containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
-		}
-		ready, total := CalculateReadiness(&pod)
-		age := HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
-		image := strings.Join(GetContainerImages(&pod), ", ")
-
-		table.Append([]string{
-			pod.Name,
-			fmt.Sprintf("%d/%d", ready, total),
-			string(pod.Status.Phase),
-			strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
-			age,
-			image,
-		})
-	}
-	table.Render()
-}
-
-func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
-		"NAME",
-		"STATUS",
-		"AGE",
-	})
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-
-	for _, ns := range namespaces.Items {
-		name := ns.ObjectMeta.Name
-		status := ns.Status.Phase
-		age := HumanReadableDuration(time.Since(ns.ObjectMeta.CreationTimestamp.Time))
-
-		table.Append([]string{
-			name,
-			string(status),
-			age,
-		})
-	}
-	table.Render()
-}
-
-func ShowServiceByFilter(services *corev1.ServiceList) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
-		"NAME",
-		"TYPE",
-		"CLUSTER-IP",
-		"EXTERNAL-IP",
-		"PORT(S)",
-		"AGE",
-	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-
-	for _, service := range services.Items {
-		var externalIPs string
-		if len(service.Spec.ExternalIPs) > 0 {
-			externalIPs = strings.Join(service.Spec.ExternalIPs, ", ")
-		} else {
-			externalIPs = "<none>"
-		}
-		age := HumanReadableDuration(time.Since(service.ObjectMeta.CreationTimestamp.Time))
-		ports := make([]string, len(service.Spec.Ports))
-		for i, port := range service.Spec.Ports {
-			ports[i] = fmt.Sprintf("%d/%s", port.Port, string(port.Protocol))
-		}
-
-		table.Append([]string{
-			service.Name,
-			string(service.Spec.Type),
-			service.Spec.ClusterIP,
-			externalIPs,
-			strings.Join(ports, ", "),
-			age,
-		})
-	}
-	table.Render()
-}
-
-func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
-		"NAME",
-		"READY",
-		"UP-TO-DATE",
-		"AVAILABLE",
-		"AGE",
-	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-
-	for _, deploy := range deployments.Items {
-		name := deploy.Name
-		age := HumanReadableDuration(time.Since(deploy.ObjectMeta.CreationTimestamp.Time))
-
-		table.Append([]string{
-			name,
-			fmt.Sprintf("%d/%d", deploy.Status.ReadyReplicas, deploy.Status.Replicas),
-			fmt.Sprintf("%d", deploy.Status.UpdatedReplicas),
-			fmt.Sprintf("%d", deploy.Status.AvailableReplicas),
-			age,
-		})
-	}
-	table.Render()
-}
-
-// -----------
+// -------------------------------------------------------------------
 // context.go
-// -----------
+// -------------------------------------------------------------------
 func (kc *KubeConfig) Load() error {
 	var configs []*clientcmdapi.Config
 	for _, file := range kc.Files {
@@ -698,9 +578,40 @@ func ShowContext(kc *KubeConfig) error {
 	return nil
 }
 
-// -----------
+func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
+	// Load the Kubernetes configuration file.
+	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	// Parse the configuration file into an API object.
+	kubeconfig, err := clientcmd.Load(kubeconfigBytes)
+	if err != nil {
+		return err
+	}
+
+	// Check if the specified context exists.
+	if _, ok := kubeconfig.Contexts[contextName]; !ok {
+		return errors.New("context does not exist in the Kubernetes configuration file")
+	}
+
+	// Change the current context to the new context.
+	kubeconfig.CurrentContext = contextName
+
+	// Write the modified configuration back to the file.
+	err = clientcmd.ModifyConfig(clientcmd.NewDefaultPathOptions(), *kubeconfig, true)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("\n> Changed context to: %s\n", kubeconfig.CurrentContext)
+	return nil
+}
+
+// -------------------------------------------------------------------
 // pods.go
-// -----------
+// -------------------------------------------------------------------
 func GetContainerImages(pod *corev1.Pod) []string {
 	var images []string
 	for _, container := range pod.Spec.Containers {
@@ -748,4 +659,130 @@ func CalculateReadiness(pod *corev1.Pod) (int, int) {
 		total++
 	}
 	return ready, total
+}
+
+func ShowPodsByFilter(pods *corev1.PodList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"POD NAME",
+		"READY",
+		"STATUS",
+		"RESTARTS",
+		"AGE",
+		"IMAGE",
+	})
+
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, pod := range pods.Items {
+		var containerStatuses []string
+		for _, cs := range pod.Status.ContainerStatuses {
+			containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
+		}
+		ready, total := CalculateReadiness(&pod)
+		age := HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
+		image := strings.Join(GetContainerImages(&pod), ", ")
+
+		table.Append([]string{
+			pod.Name,
+			fmt.Sprintf("%d/%d", ready, total),
+			string(pod.Status.Phase),
+			strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
+			age,
+			image,
+		})
+	}
+	table.Render()
+}
+
+func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"NAME",
+		"STATUS",
+		"AGE",
+	})
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, ns := range namespaces.Items {
+		name := ns.ObjectMeta.Name
+		status := ns.Status.Phase
+		age := HumanReadableDuration(time.Since(ns.ObjectMeta.CreationTimestamp.Time))
+
+		table.Append([]string{
+			name,
+			string(status),
+			age,
+		})
+	}
+	table.Render()
+}
+
+func ShowServiceByFilter(services *corev1.ServiceList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"NAME",
+		"TYPE",
+		"CLUSTER-IP",
+		"EXTERNAL-IP",
+		"PORT(S)",
+		"AGE",
+	})
+
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, service := range services.Items {
+		var externalIPs string
+		if len(service.Spec.ExternalIPs) > 0 {
+			externalIPs = strings.Join(service.Spec.ExternalIPs, ", ")
+		} else {
+			externalIPs = "<none>"
+		}
+		age := HumanReadableDuration(time.Since(service.ObjectMeta.CreationTimestamp.Time))
+		ports := make([]string, len(service.Spec.Ports))
+		for i, port := range service.Spec.Ports {
+			ports[i] = fmt.Sprintf("%d/%s", port.Port, string(port.Protocol))
+		}
+
+		table.Append([]string{
+			service.Name,
+			string(service.Spec.Type),
+			service.Spec.ClusterIP,
+			externalIPs,
+			strings.Join(ports, ", "),
+			age,
+		})
+	}
+	table.Render()
+}
+
+func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"NAME",
+		"READY",
+		"UP-TO-DATE",
+		"AVAILABLE",
+		"AGE",
+	})
+
+	table.SetAutoFormatHeaders(false)
+	table.SetAutoWrapText(false)
+
+	for _, deploy := range deployments.Items {
+		name := deploy.Name
+		age := HumanReadableDuration(time.Since(deploy.ObjectMeta.CreationTimestamp.Time))
+
+		table.Append([]string{
+			name,
+			fmt.Sprintf("%d/%d", deploy.Status.ReadyReplicas, deploy.Status.Replicas),
+			fmt.Sprintf("%d", deploy.Status.UpdatedReplicas),
+			fmt.Sprintf("%d", deploy.Status.AvailableReplicas),
+			age,
+		})
+	}
+	table.Render()
 }

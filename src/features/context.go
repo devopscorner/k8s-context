@@ -1,7 +1,9 @@
 package features
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/AlecAivazis/survey/v2"
 	"k8s.io/client-go/kubernetes"
@@ -158,5 +160,36 @@ func ShowContext(kc *KubeConfig) error {
 
 	fmt.Printf("Current context: %s\n", currentContext)
 
+	return nil
+}
+
+func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
+	// Load the Kubernetes configuration file.
+	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	// Parse the configuration file into an API object.
+	kubeconfig, err := clientcmd.Load(kubeconfigBytes)
+	if err != nil {
+		return err
+	}
+
+	// Check if the specified context exists.
+	if _, ok := kubeconfig.Contexts[contextName]; !ok {
+		return errors.New("context does not exist in the Kubernetes configuration file")
+	}
+
+	// Change the current context to the new context.
+	kubeconfig.CurrentContext = contextName
+
+	// Write the modified configuration back to the file.
+	err = clientcmd.ModifyConfig(clientcmd.NewDefaultPathOptions(), *kubeconfig, true)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("\n> Changed context to: %s\n", kubeconfig.CurrentContext)
 	return nil
 }
