@@ -163,7 +163,7 @@ Use "k8s-context [command] --help" for more information about a command.
     ./k8s-context merge $HOME/.kube/config  $HOME/.kube/config-staging-dev $HOME/.kube/config-staging-uat $HOME/.kube/config-staging-qa
     ```
 
-  - Discovery All KUBECONFIG Files Inside `~/.kube` Folder -- Interactive Mode
+  - Discovery All KUBECONFIG Files Inside `~/.kube` Folder --- Interactive Mode
     ```
     ./k8s-context load
     ---
@@ -178,7 +178,7 @@ Use "k8s-context [command] --help" for more information about a command.
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-production
     ```
 
-  - List Context(s) -- Interactive Mode
+  - List Context(s)
     ```
     KUBECONFIG=$HOME/.kube/config
     kubectl config get-contexts
@@ -191,14 +191,14 @@ Use "k8s-context [command] --help" for more information about a command.
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
 
     ## Spesific Kubeconfig ##
-    ./k8s-context list -l $HOME/.kube/config-cluster
+    ./k8s-context list -f $HOME/.kube/config-cluster
     ---
     Available Kubernetes contexts:
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-uat-staging
     ```
 
-  - Switch (select) Context(s) -- Interactive Mode
+  - Switch (select) Context(s) --- Interactive Mode
     ```
     ## Default KUBECONFIG path (`/.kube/config`) ##
     ./k8s-context switch
@@ -209,7 +209,7 @@ Use "k8s-context [command] --help" for more information about a command.
     > Changed context to: arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
 
     ## Spesific Kubeconfig ##
-    ./k8s-context switch -l $HOME/.kube/config-cluster
+    ./k8s-context switch - $HOME/.kube/config-cluster
     ---
     ? Select a context  [Use arrows to move, type to filter]
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
