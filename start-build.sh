@@ -34,7 +34,7 @@ docker tag $IMAGE:$TAG $IMAGE:go1.19.5-alpine3.17
 docker tag $IMAGE:$TAG $IMAGE:alpine
 docker tag $IMAGE:$TAG $IMAGE:alpine-latest
 docker tag $IMAGE:$TAG $IMAGE:latest
-docker tag $IMAGE:$TAG $IMAGE:1.1.5
+docker tag $IMAGE:$TAG $IMAGE:1.1.6
 echo ""
 
 echo "Cleanup Unknown Tags"
