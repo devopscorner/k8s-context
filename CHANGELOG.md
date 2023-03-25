@@ -44,6 +44,17 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 ---
 
+### version 1.1.6
+
+- Circular `load` --> `switch` --> `change context`
+- Change feature `load` kubeconfig file --> will compare existing context to $HOME/.kube/config,
+  if action from `load` kubeconfig failed, need to merge into $HOME/.kube/config first.
+- Feature `get` will references from $HOME/.kube/config,
+  if `get` refer to spesific kubeconfig using `--kubeconfig`,
+  `get` will use context by defining in `--kubeconfig` flags
+
+---
+
 ### version 1.1.5
 
 - Remove `select`, merged into `switch`
