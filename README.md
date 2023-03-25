@@ -225,55 +225,45 @@ Use "k8s-context [command] --help" for more information about a command.
 
     -- or --
 
-    ./k8s-context select [cluster_name] --kubeconfig=$HOME/.kube/config-new-cluster
-    ```
-
-  - Run for Amazon EKS
-    ```
-    KUBECONFIG=$HOME/.kube/config
-    ./k8s-context select arn:aws:eks:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:cluster/${EKS_CLUSTER_NAME}
-
-    ./k8s-context select arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-staging --kubeconfig=$HOME/.kube/config-devopscorner_staging
-
-    ./k8s-context select arn:aws:eks:ap-southeast-1:${AWS_ACCOUNT_ID}:cluster/devopscorner-prod --kubeconfig=$HOME/.kube/config-devopscorner_prod
+    ./k8s-context switch -f $HOME/.kube/config-new-cluster
     ```
 
 - Get Resources Kubernetes
 
   - Namespaces
     ```
-    ./k8s-context get namespace --kubeconfig=$HOME/.kube/config
+    ./k8s-context get namespace 
 
     -- or --
 
-    ./k8s-context get ns --kubeconfig=$HOME/.kube/config
+    ./k8s-context get ns 
     ```
 
   - Services
     ```
-    ./k8s-context get services --kubeconfig=$HOME/.kube/config
+    ./k8s-context get services 
 
     -- or --
 
-    ./k8s-context get svc --kubeconfig=$HOME/.kube/config
+    ./k8s-context get svc 
     ```
 
   - Deployments
     ```
-    ./k8s-context get deployments --kubeconfig=$HOME/.kube/config
+    ./k8s-context get deployments 
 
     -- or --
 
-    ./k8s-context get deploy --kubeconfig=$HOME/.kube/config
+    ./k8s-context get deploy 
     ```
 
   - Pods
     ```
-    ./k8s-context get pods --kubeconfig=$HOME/.kube/config
+    ./k8s-context get pods 
 
     -- or --
 
-    ./k8s-context get po --kubeconfig=$HOME/.kube/config
+    ./k8s-context get po 
     ```
 
 - Get Resources By Filtering Namespace (Comma-Separated)
