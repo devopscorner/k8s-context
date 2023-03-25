@@ -1,14 +1,16 @@
 package features
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/AlecAivazis/survey/v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/util/homedir"
 )
 
 type KubeConfig struct {
@@ -16,6 +18,14 @@ type KubeConfig struct {
 	Merged    *clientcmdapi.Config
 	Overwrite bool
 }
+
+var (
+	kubeconfig     string
+	loadFile       string
+	selectedConfig string
+	configBytes    []byte
+	err            error
+)
 
 func (kc *KubeConfig) Load() error {
 	var configs []*clientcmdapi.Config
@@ -112,42 +122,6 @@ func ListContexts(kc *KubeConfig) error {
 	return nil
 }
 
-func SwitchContext(kc *KubeConfig) error {
-	if err := kc.Load(); err != nil {
-		return err
-	}
-
-	var contextNames []string
-	for contextName := range kc.Merged.Contexts {
-		contextNames = append(contextNames, contextName)
-	}
-
-	var selectedContext string
-	prompt := &survey.Select{
-		Message: "Select a context",
-		Options: contextNames,
-	}
-
-	if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
-		return err
-	}
-
-	config := kc.Merged
-	_, ok := config.Contexts[selectedContext]
-	if !ok {
-		return fmt.Errorf("context not found: %s", selectedContext)
-	}
-
-	config.CurrentContext = selectedContext
-	if err := kc.SaveToFile(kubeconfig); err != nil {
-		return err
-	}
-
-	fmt.Printf("Switched to context: %s\n", selectedContext)
-
-	return nil
-}
-
 func ShowContext(kc *KubeConfig) error {
 	if err := kc.Load(); err != nil {
 		return err
@@ -163,6 +137,72 @@ func ShowContext(kc *KubeConfig) error {
 	return nil
 }
 
+func InitConfig() error {
+	home := homedir.HomeDir()
+	kubeconfig := filepath.Join(home, ".kube", "config")
+
+	// Use default kubeconfig file if load flag is not provided
+	if loadFile == "" {
+		if selectedConfig != "" {
+			configBytes, err = os.ReadFile(selectedConfig)
+		} else {
+			configBytes, err = os.ReadFile(kubeconfig)
+		}
+		if err != nil {
+			return err
+		}
+	} else {
+		// Load kubeconfig file from flag
+		configBytes, err = os.ReadFile(loadFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func SelectedConfig(contextNames []string, config *clientcmdapi.Config) error {
+	var selectedContext string
+	prompt := &survey.Select{
+		Message: "Select a context",
+		Options: contextNames,
+	}
+
+	if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
+		return err
+	}
+
+	fmt.Printf("Selected context: %s\n", selectedContext)
+
+	context, ok := config.Contexts[selectedContext]
+	if !ok {
+		return fmt.Errorf("context not found: %s", selectedContext)
+	}
+
+	cluster, ok := config.Clusters[context.Cluster]
+	if !ok {
+		return fmt.Errorf("cluster not found: %s", context.Cluster)
+	}
+
+	// auth, ok := config.AuthInfos[context.AuthInfo]
+	// if !ok {
+	// 	return fmt.Errorf("auth info not found: %s", context.AuthInfo)
+	// }
+
+	fmt.Printf("Cluster server: %s\n", cluster.Server)
+	// fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
+	// fmt.Printf("User name: %s\n", auth.Username)
+
+	if loadFile == "" {
+		ChangeKubeconfigContext(kubeconfig, context.Cluster)
+	} else {
+		ChangeKubeconfigContext(loadFile, context.Cluster)
+	}
+
+	return nil
+}
+
 func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
 	// Load the Kubernetes configuration file.
 	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
@@ -173,12 +213,14 @@ func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
 	// Parse the configuration file into an API object.
 	kubeconfig, err := clientcmd.Load(kubeconfigBytes)
 	if err != nil {
+		fmt.Printf("\n> Can't read Kubernetes configuration file")
 		return err
 	}
 
 	// Check if the specified context exists.
 	if _, ok := kubeconfig.Contexts[contextName]; !ok {
-		return errors.New("context does not exist in the Kubernetes configuration file")
+		fmt.Printf("\n> Context does not exist in the Kubernetes configuration file ($HOME/.kube/config) \n> Merge into your Kubernetes config file first... ")
+		return err
 	}
 
 	// Change the current context to the new context.
@@ -187,9 +229,11 @@ func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
 	// Write the modified configuration back to the file.
 	err = clientcmd.ModifyConfig(clientcmd.NewDefaultPathOptions(), *kubeconfig, true)
 	if err != nil {
+		fmt.Printf("\n> Failed to change context: %s\n", kubeconfig.CurrentContext)
 		return err
+	} else {
+		fmt.Printf("\n> Successfully change context to: %s\n", kubeconfig.CurrentContext)
+		return nil
 	}
-
-	fmt.Printf("\n> Changed context to: %s\n", kubeconfig.CurrentContext)
 	return nil
 }

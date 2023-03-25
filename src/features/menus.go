@@ -26,15 +26,7 @@ const (
 
 `
 	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.5"
-)
-
-var (
-	kubeconfig     string
-	loadFile       string
-	selectedConfig string
-	configBytes    []byte
-	err            error
+	VERSION = "v1.1.6"
 )
 
 func GetCommands() []*cobra.Command {
@@ -56,38 +48,25 @@ func GetCommands() []*cobra.Command {
 		Use:   "list",
 		Short: "List all available Kubernetes contexts",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			InitConfig()
 
-			// Use default kubeconfig file if load flag is not provided
-			if loadFile == "" {
-				if selectedConfig != "" {
-					configBytes, err = os.ReadFile(selectedConfig)
-				} else {
-					configBytes, err = os.ReadFile(kubeconfig)
-				}
-				if err != nil {
-					return err
-				}
+			if configBytes == nil {
+				// Print the list of context names
+				fmt.Println("No available contexts!")
 			} else {
-				// Load kubeconfig file from flag
-				configBytes, err = os.ReadFile(loadFile)
+				// Get the map of context name to context config
+				config, err := clientcmd.Load(configBytes)
 				if err != nil {
 					return err
 				}
-			}
+				contextsMap := config.Contexts
 
-			// Get the map of context name to context config
-			config, err := clientcmd.Load(configBytes)
-			if err != nil {
-				return err
+				// Print the list of context names
+				fmt.Println("Available Kubernetes contexts:")
+				for contextName := range contextsMap {
+					fmt.Println(contextName)
+				}
 			}
-			contextsMap := config.Contexts
-
-			// Print the list of context names
-			fmt.Println("Available Kubernetes contexts:")
-			for contextName := range contextsMap {
-				fmt.Println(contextName)
-			}
-
 			return nil
 		},
 	}
@@ -146,14 +125,12 @@ func GetCommands() []*cobra.Command {
 			if err != nil {
 				return err
 			}
-			contextsMap := config.Contexts
-
-			// Print the list of context names
-			fmt.Println("\nAvailable Kubernetes contexts:")
-			for contextName := range contextsMap {
-				fmt.Println(contextName)
+			var contextNames []string
+			for contextName := range config.Contexts {
+				contextNames = append(contextNames, contextName)
 			}
 
+			SelectedConfig(contextNames, config)
 			return nil
 		},
 	}
@@ -311,27 +288,7 @@ func GetCommands() []*cobra.Command {
 		Use:   "switch",
 		Short: "Switch to different context",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			home := homedir.HomeDir()
-			kubeconfig := filepath.Join(home, ".kube", "config")
-
-			// Use default kubeconfig file if load flag is not provided
-			if loadFile == "" {
-				if selectedConfig != "" {
-					configBytes, err = os.ReadFile(selectedConfig)
-				} else {
-					configBytes, err = os.ReadFile(kubeconfig)
-				}
-				if err != nil {
-					return err
-				}
-			} else {
-				// Load kubeconfig file from flag
-				configBytes, err = os.ReadFile(loadFile)
-				if err != nil {
-					return err
-				}
-			}
+			InitConfig()
 
 			// Get the map of context name to context config
 			config, err := clientcmd.Load(configBytes)
@@ -343,43 +300,7 @@ func GetCommands() []*cobra.Command {
 				contextNames = append(contextNames, contextName)
 			}
 
-			var selectedContext string
-			prompt := &survey.Select{
-				Message: "Select a context",
-				Options: contextNames,
-			}
-
-			if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
-				return err
-			}
-
-			fmt.Printf("Selected context: %s\n", selectedContext)
-
-			context, ok := config.Contexts[selectedContext]
-			if !ok {
-				return fmt.Errorf("context not found: %s", selectedContext)
-			}
-
-			cluster, ok := config.Clusters[context.Cluster]
-			if !ok {
-				return fmt.Errorf("cluster not found: %s", context.Cluster)
-			}
-
-			// auth, ok := config.AuthInfos[context.AuthInfo]
-			// if !ok {
-			// 	return fmt.Errorf("auth info not found: %s", context.AuthInfo)
-			// }
-
-			fmt.Printf("Cluster server: %s\n", cluster.Server)
-			// fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
-			// fmt.Printf("User name: %s\n", auth.Username)
-
-			if loadFile == "" {
-				ChangeKubeconfigContext(kubeconfig, context.Cluster)
-			} else {
-				ChangeKubeconfigContext(loadFile, context.Cluster)
-			}
-
+			SelectedConfig(contextNames, config)
 			return nil
 		},
 	}
