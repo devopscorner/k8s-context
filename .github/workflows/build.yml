@@ -22,11 +22,6 @@ jobs:
         arch: [amd64, arm64]
 
     steps:
-      - name: Install goversioninfo
-        run: |
-          go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
-        working-directory: src
-
       - name: Checkout code at release tag
         uses: actions/checkout@v2
         with:
