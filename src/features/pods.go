@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/olekukonko/tablewriter"
+	yaml "gopkg.in/yaml.v2"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -206,6 +207,210 @@ func DescribePods(pod *corev1.Pod) {
 	fmt.Printf("Status: \t%s\n", pod.Status.Phase)
 	fmt.Printf("IP Address: \t%s\n", pod.Status.PodIP)
 	fmt.Printf("Node Name: \t%s\n", pod.Spec.NodeName)
+}
+
+func DescribePodsDetail(pod *corev1.Pod) {
+	var (
+		container_port string
+		state          string
+	)
+
+	// Print detailed information about the pod
+	fmt.Printf("Name:      \t%s\n", pod.ObjectMeta.Name)
+	fmt.Printf("Namespace: \t%s\n", pod.ObjectMeta.Namespace)
+	fmt.Printf("Priority:  \t%d\n", pod.Spec.Priority)
+	fmt.Printf("Node:      \t%s\n", pod.Spec.NodeName)
+	fmt.Printf("Start Time:\t%s\n", pod.Status.StartTime.Time)
+
+	// Convert labels to YAML
+	labelsYAML, err := yaml.Marshal(pod.ObjectMeta.Labels)
+	if err != nil {
+		fmt.Println("Error marshaling labels to YAML:", err)
+	} else {
+		fmt.Printf("Labels:")
+		yamlLines := strings.Split(string(labelsYAML), "\n")
+		for _, line := range yamlLines {
+			fmt.Printf("\t\t%s\n", line)
+		}
+	}
+	fmt.Printf("Annotations:")
+	for key, value := range pod.ObjectMeta.Annotations {
+		fmt.Printf("\t%s: %s\n", key, value)
+	}
+	fmt.Printf("Status:      \t%s\n", pod.Status.Phase)
+	fmt.Printf("IP:          \t%s\n", pod.Status.PodIP)
+
+	fmt.Printf("IPs:\n")
+	for _, podIP := range pod.Status.PodIPs {
+		fmt.Printf("  IP: \t\t%s\n", podIP.IP)
+	}
+	fmt.Printf("Controlled By: \t%s/%s\n", pod.ObjectMeta.OwnerReferences[0].Kind, pod.ObjectMeta.OwnerReferences[0].Name)
+	fmt.Println("---------------------------------------------------------------------------")
+	fmt.Println("Containers:")
+	for _, container := range pod.Spec.Containers {
+
+		containerStatus := GetContainerStatus(pod, container.Name)
+		if containerStatus != nil {
+			fmt.Printf("  %s:\n", container.Name)
+			fmt.Printf("    Container ID: \t%s\n", containerStatus.ContainerID)
+			fmt.Printf("    Image:        \t%s\n", container.Image)
+			fmt.Printf("    Image ID:     \t%s\n", containerStatus.ImageID)
+
+			if container.Ports != nil {
+				fmt.Printf("    Port: \t\t%v\n", container.Ports)
+			} else {
+				container_port = "<none>"
+				fmt.Printf("    Port: \t\t%v\n", container_port)
+			}
+
+			if len(pod.Spec.Containers[0].Ports) > 0 {
+				if pod.Spec.Containers[0].Ports[0].HostPort != 0 {
+					fmt.Printf("    Host Port: \t\t%d\n", pod.Spec.Containers[0].Ports[0].HostPort)
+				} else {
+					fmt.Printf("    Host Port: \t\t<none>\n")
+				}
+			} else {
+				fmt.Printf("    Host Port: \t\t<none>\n")
+			}
+
+			if pod.Status.ContainerStatuses[0].State.Running != nil {
+				state = "Running"
+			} else if pod.Status.ContainerStatuses[0].State.Terminated != nil {
+				state = "Terminated"
+			} else {
+				state = "Waiting"
+			}
+			fmt.Printf("    State: \t\t%s\n", state)
+			if pod.Status.ContainerStatuses[0].State.Running != nil {
+				fmt.Printf("      Started: \t\t%s\n", pod.Status.ContainerStatuses[0].State.Running.StartedAt.Time)
+			}
+
+			if containerStatus.LastTerminationState.Terminated != nil {
+				fmt.Printf("    Last State:\n")
+				fmt.Printf("      Reason:     \t%s\n", containerStatus.LastTerminationState.Terminated.Reason)
+				fmt.Printf("      Exit Code:  \t%d\n", containerStatus.LastTerminationState.Terminated.ExitCode)
+				fmt.Printf("      Started:    \t%s\n", containerStatus.LastTerminationState.Terminated.StartedAt.Time)
+				fmt.Printf("      Finished:   \t%s\n", containerStatus.LastTerminationState.Terminated.FinishedAt.Time)
+			}
+
+			fmt.Printf("    Ready:        \t%t\n", containerStatus.Ready)
+			fmt.Printf("    Restart Count: \t%d\n", containerStatus.RestartCount)
+			fmt.Printf("    Limits:\n")
+			fmt.Printf("      cpu:        %s\n", container.Resources.Limits.Cpu().String())
+			fmt.Printf("      memory:     %s\n", container.Resources.Limits.Memory().String())
+			fmt.Printf("    Requests:\n")
+			fmt.Printf("      cpu:        %s\n", container.Resources.Requests.Cpu().String())
+			fmt.Printf("      memory:     %s\n", container.Resources.Requests.Memory().String())
+
+			labelsYAML, err := yaml.Marshal(container.Env)
+			if err != nil {
+				fmt.Println("Error marshaling environment variables to YAML:", err)
+			} else {
+				fmt.Printf("    Environment:\n")
+				env := make([]map[string]interface{}, 0)
+				if err := yaml.Unmarshal(labelsYAML, &env); err != nil {
+					fmt.Println("Error unmarshaling environment variables from YAML:", err)
+				} else {
+					for _, v := range env {
+						name := v["name"].(string)
+						value := v["value"].(string)
+						fmt.Printf("      %s: %s\n", name, value)
+					}
+				}
+			}
+
+			fmt.Printf("    Mounts:\n")
+			for _, mount := range container.VolumeMounts {
+				fmt.Printf("      %s from %s (ro:%t)\n", mount.MountPath, mount.Name, mount.ReadOnly)
+			}
+
+			fmt.Println("Conditions:")
+			fmt.Printf("  Type: \t\tStatus\n")
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == "Initialized" {
+					fmt.Printf("  %s\t\t%s\n", cond.Type, cond.Status)
+				}
+				if cond.Type == "Ready" {
+					fmt.Printf("  %s\t\t\t%s\n", cond.Type, cond.Status)
+				}
+				if cond.Type == "ContainersReady" {
+					fmt.Printf("  %s\t%s\n", cond.Type, cond.Status)
+				}
+				if cond.Type == "PodScheduled" {
+					fmt.Printf("  %s\t\t%s\n", cond.Type, cond.Status)
+				}
+			}
+
+			fmt.Println("Volumes:")
+			for _, volume := range pod.Spec.Volumes {
+				switch {
+				case volume.ConfigMap != nil:
+					fmt.Printf("  %s:\n", volume.Name)
+					fmt.Printf("    Type: ConfigMap\n")
+					fmt.Printf("    Name: %s\n", volume.ConfigMap.Name)
+					if volume.ConfigMap.Optional != nil {
+						fmt.Printf("    Optional: %t\n", *volume.ConfigMap.Optional)
+					} else {
+						fmt.Printf("    Optional: false\n")
+					}
+				case volume.Secret != nil:
+					fmt.Printf("  %s:\n", volume.Name)
+					fmt.Printf("    Type: Secret\n")
+					fmt.Printf("    Name: %s\n", volume.Secret.SecretName)
+					if volume.Secret.Optional != nil {
+						fmt.Printf("    Optional: %t\n", *volume.Secret.Optional)
+					} else {
+						fmt.Printf("    Optional: false\n")
+					}
+				default:
+					fmt.Printf("  %s: Unknown volume type\n", volume.Name)
+				}
+			}
+
+			// QoS Class
+			fmt.Printf("QoS Class: \t\t%s\n", pod.Status.QOSClass)
+
+			// Node Selectors
+			nodeSelectors := "<none>"
+			if len(pod.Spec.NodeSelector) > 0 {
+				nodeSelectors = fmt.Sprintf("%v", pod.Spec.NodeSelector)
+			}
+			fmt.Printf("Node-Selectors: \t%s\n", nodeSelectors)
+			fmt.Printf("\n")
+
+			// Tolerations
+			tolerations := pod.Spec.Tolerations
+			tolerationStrings := make([]string, 0)
+
+			for _, toleration := range tolerations {
+				tolerationStrings = append(tolerationStrings, fmt.Sprintf("%s:%s op=%s for %ds", toleration.Key, toleration.Operator, toleration.Effect, toleration.TolerationSeconds))
+			}
+			tolerationsString := strings.Join(tolerationStrings, "\n\t\t")
+			fmt.Printf("Tolerations:\t%s\n", strings.ReplaceAll(fmt.Sprintf("%v", tolerationsString), " ", "\t"))
+
+			// Events
+			events := "<none>"
+			fmt.Println("Events:")
+			if len(pod.Status.Conditions) > 0 {
+				events = ""
+				for _, condition := range pod.Status.Conditions {
+					fmt.Printf("  %-16s %v\n", condition.Type, condition.Status)
+					fmt.Printf("  Last Timestamp:  %v\n", condition.LastTransitionTime)
+				}
+				events = strings.TrimSuffix(events, ", ")
+			}
+			fmt.Printf("\t%s\n", events)
+		}
+	}
+}
+
+func GetContainerStatus(pod *corev1.Pod, containerName string) *corev1.ContainerStatus {
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.Name == containerName {
+			return &status
+		}
+	}
+	return nil
 }
 
 func GetFreePort() (int, error) {

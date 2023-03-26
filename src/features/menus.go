@@ -322,7 +322,7 @@ func GetCommands() []*cobra.Command {
 					if err != nil {
 						return err
 					}
-					DescribePods(po)
+					DescribePodsDetail(po)
 				}
 			}
 
