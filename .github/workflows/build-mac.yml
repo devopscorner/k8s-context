@@ -48,7 +48,7 @@ jobs:
         working-directory: src
         if: matrix.os == 'macos-latest'
         run: |
-          xcode-select --install
+          xcode-select --install || true
 
       - name: Create .pkg package for macOS ARM64
         working-directory: src
@@ -57,7 +57,7 @@ jobs:
           mkdir -p pkgroot/usr/local/bin/
           cp -r ${{ env.AppName }}-macos-latest-${{ matrix.arch }} pkgroot/usr/local/bin/${{ env.AppName }}
           pkgbuild --identifier com.${{ env.AppName }}.pkg --version ${{ github.ref_name }} --install-location /usr/local/bin pkgroot ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
-          rm -rf pkgroot
+          rm -rf pkgroot || true
 
       - name: Create .zip package for macOS ARM64
         working-directory: src
