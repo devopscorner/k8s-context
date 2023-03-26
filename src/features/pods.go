@@ -212,12 +212,24 @@ func DescribePods(pod *corev1.Pod) {
 	if err != nil {
 		fmt.Println("Error marshaling labels to YAML:", err)
 	} else {
-		fmt.Printf("Labels:")
+		fmt.Printf("Labels: \n")
 		yamlLines := strings.Split(string(labelsYAML), "\n")
 		for _, line := range yamlLines {
 			fmt.Printf("\t\t%s\n", line)
 		}
 	}
+
+	labelsAnnotation, err := yaml.Marshal(pod.ObjectMeta.Annotations)
+	if err != nil {
+		fmt.Println("Error marshaling labels to YAML:", err)
+	} else {
+		fmt.Printf("Annotations: \n")
+		yamlLines := strings.Split(string(labelsAnnotation), "\n")
+		for _, line := range yamlLines {
+			fmt.Printf("\t\t%s\n", line)
+		}
+	}
+
 	fmt.Printf("Status:      \t%s\n", pod.Status.Phase)
 	fmt.Printf("IP:          \t%s\n", pod.Status.PodIP)
 	fmt.Printf("IPs:\n")
@@ -242,16 +254,24 @@ func DescribePodsDetail(pod *corev1.Pod) {
 	if err != nil {
 		fmt.Println("Error marshaling labels to YAML:", err)
 	} else {
-		fmt.Printf("Labels:")
+		fmt.Printf("Labels: \n")
 		yamlLines := strings.Split(string(labelsYAML), "\n")
 		for _, line := range yamlLines {
 			fmt.Printf("\t\t%s\n", line)
 		}
 	}
-	fmt.Printf("Annotations:")
-	for key, value := range pod.ObjectMeta.Annotations {
-		fmt.Printf("\t%s: %s\n", key, value)
+
+	labelsAnnotation, err := yaml.Marshal(pod.ObjectMeta.Annotations)
+	if err != nil {
+		fmt.Println("Error marshaling labels to YAML:", err)
+	} else {
+		fmt.Printf("Annotations: \n")
+		yamlLines := strings.Split(string(labelsAnnotation), "\n")
+		for _, line := range yamlLines {
+			fmt.Printf("\t\t%s\n", line)
+		}
 	}
+
 	fmt.Printf("Status:      \t%s\n", pod.Status.Phase)
 	fmt.Printf("IP:          \t%s\n", pod.Status.PodIP)
 
