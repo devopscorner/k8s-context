@@ -1,0 +1,67 @@
+name: GitHub Build and Package
+
+on:
+  push:
+    branches:
+      - master
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      ImageName: 'devopcorner/k8s-context'
+      AppName: 'k8s-context'
+
+    strategy:
+      matrix:
+        os: [windows-latest]
+        arch: [amd64]
+
+    steps:
+      - name: Checkout code at release tag
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up Go environment
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
+
+      - name: Install dependencies
+        run: |
+          go mod tidy
+        working-directory: src
+
+      - name: Build binary
+        run: |
+          GOOS=${{ matrix.os }}
+          GOARCH=${{ matrix.arch }}
+          go build -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} main.go
+        working-directory: src
+
+      - name: Create .exe package
+        run: |
+          GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe main.go
+        working-directory: src
+        if: matrix.os == 'windows-latest'
+
+      - name: Create .zip package for Windows
+        run: |
+          mkdir ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}
+          cp ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}/${env.AppName}.exe
+          zip -r ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.zip ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}/
+        working-directory: src
+        if: matrix.os == 'windows-latest'
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.AppName }}
+          path: |
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe
+            ${{ env.AppName }}-windows-amd64.zip
