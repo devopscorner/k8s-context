@@ -50,7 +50,7 @@ jobs:
           sudo gem install fpm
           fpm -s dir -t deb -n ${{ env.AppName }} -v ${{ github.ref_name }} ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}=/usr/local/bin/
         working-directory: src
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
 
       - name: Create .zip package for Linux AMD64
         run: |
@@ -58,7 +58,7 @@ jobs:
           cp -r ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} ${env.AppName}-linux-${{ matrix.arch }}/${env.AppName}}
           zip -r ${env.AppName}-linux-${{ matrix.arch }}.zip ${env.AppName}-linux-${{ matrix.arch }}/
         working-directory: src
-        if: matrix.os == 'ubuntu-latest
+        if: matrix.os == 'ubuntu-latest && matrix.arch == 'amd64'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
