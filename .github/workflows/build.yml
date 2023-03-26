@@ -40,13 +40,13 @@ jobs:
         run: |
           GOOS=${{ matrix.os }}
           GOARCH=${{ matrix.arch }}
-          go build -o ${env.AppName}-${{ matrix.os }}-${{ matrix.arch }} main.go
+          go build -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} main.go
 
       - name: Create .deb package
         run: |
           sudo apt-get install ruby-dev rubygems build-essential
           sudo gem install fpm
-          fpm -s dir -t deb -n ${env.AppName} -v ${{ github.ref_name }} ${env.AppName}-${{ matrix.os }}-${{ matrix.arch }}=/usr/local/bin/
+          fpm -s dir -t deb -n ${{ env.AppName }} -v ${{ github.ref_name }} ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}=/usr/local/bin/
         working-directory: .
         if: matrix.os == 'ubuntu-latest'
 
@@ -55,7 +55,7 @@ jobs:
           sudo apt-get install rpm
           sudo rpm -iUvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
           sudo dnf -y install rpm-build
-          rpmbuild -bb ${env.AppName}.spec
+          rpmbuild -bb ${{ env.AppName }}.spec
         working-directory: .
         if: matrix.os == 'ubuntu-latest'
 
@@ -63,33 +63,33 @@ jobs:
         run: |
           go get -u github.com/josephspurrier/goversioninfo/cmd/goversioninfo
           goversioninfo -o versioninfo_windows_amd64.syso
-          GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${env.AppName}-windows-amd64.exe main.go
+          GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${{ env.AppName }}-windows-amd64.exe main.go
         working-directory: .
         if: matrix.os == 'windows-latest'
 
       - name: Create .bin package for ARM64
         run: |
-          tar czf ${env.AppName}-linux-arm64.tar.gz ${env.AppName}-linux-arm64
-          shasum -a 256 ${env.AppName}-linux-arm64.tar.gz > ${env.AppName}-linux-arm64.tar.gz.sha256
+          tar czf ${{ env.AppName }}-linux-arm64.tar.gz ${{ env.AppName }}-linux-arm64
+          shasum -a 256 ${{ env.AppName }}-linux-arm64.tar.gz > ${{ env.AppName }}-linux-arm64.tar.gz.sha256
         working-directory: .
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
 
       - name: Create .bin package for AMD64
         run: |
-          tar czf ${env.AppName}-linux-amd64.tar.gz ${env.AppName}-linux-amd64
-          shasum -a 256 ${env.AppName}-linux-amd64.tar.gz > ${env.AppName}-linux-amd64.tar.gz.sha256
+          tar czf ${{ env.AppName }}-linux-amd64.tar.gz ${{ env.AppName }}-linux-amd64
+          shasum -a 256 ${{ env.AppName }}-linux-amd64.tar.gz > ${{ env.AppName }}-linux-amd64.tar.gz.sha256
         working-directory: .
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
         with:
-          name: ${env.AppName}
+          name: ${{ env.AppName }}
           path: |
-            ${env.AppName}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.deb
-            ${env.AppName}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.rpm
-            ${env.AppName}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.exe
-            ${env.AppName}-linux-arm64.tar.gz
-            ${env.AppName}-linux-arm64.tar.gz.sha256
-            ${env.AppName}-linux-amd64.tar.gz
-            ${env.AppName}-linux-amd64.tar.gz.sha256
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.deb
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.rpm
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.exe
+            ${{ env.AppName }}-linux-arm64.tar.gz
+            ${{ env.AppName }}-linux-arm64.tar.gz.sha256
+            ${{ env.AppName }}-linux-amd64.tar.gz
+            ${{ env.AppName }}-linux-amd64.tar.gz.sha256
