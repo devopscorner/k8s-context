@@ -60,6 +60,11 @@ jobs:
 
       - name: Create .bin package for ARM64
         run: |
+          # Create a directory for the binary
+          mkdir ${{ env.AppName }}-linux-arm64
+          # Copy the binary to the directory
+          cp ${{ env.AppName }}-linux-arm64 ${{ env.AppName }}-linux-arm64/${{ env.AppName }}
+          # Create the tarball and checksum
           tar czf ${{ env.AppName }}-linux-arm64.tar.gz ${{ env.AppName }}-linux-arm64
           shasum -a 256 ${{ env.AppName }}-linux-arm64.tar.gz > ${{ env.AppName }}-linux-arm64.tar.gz.sha256
         working-directory: src
@@ -67,19 +72,33 @@ jobs:
 
       - name: Create .bin package for AMD64
         run: |
+          # Create a directory for the binary
+          mkdir ${{ env.AppName }}-linux-amd64
+          # Copy the binary to the directory
+          cp ${{ env.AppName }}-linux-amd64 ${{ env.AppName }}-linux-amd64/${{ env.AppName }}
+          # Create the tarball and checksum
           tar czf ${{ env.AppName }}-linux-amd64.tar.gz ${{ env.AppName }}-linux-amd64
           shasum -a 256 ${{ env.AppName }}-linux-amd64.tar.gz > ${{ env.AppName }}-linux-amd64.tar.gz.sha256
         working-directory: src
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
+
+      - name: Create .pkg package for macOS
+        run: |
+          mkdir -p pkgroot/usr/local/bin/
+          cp ${{ env.AppName }}-macos-latest-amd64 pkgroot/usr/local/bin/${{ env.AppName }}
+          pkgbuild --identifier com.${{ env.AppName }}.pkg --version ${{ github.ref_name }} --install-location /usr/local/bin pkgroot ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
+          rm -rf pkgroot
+        working-directory: .
+        if: matrix.os == 'macos-latest' && matrix.arch == 'amd64'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.AppName }}
           path: |
-            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.deb
-            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.rpm
-            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}_${{ github.ref_name }}.exe
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.deb
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe
+            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
             ${{ env.AppName }}-linux-arm64.tar.gz
             ${{ env.AppName }}-linux-arm64.tar.gz.sha256
             ${{ env.AppName }}-linux-amd64.tar.gz
