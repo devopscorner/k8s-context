@@ -60,10 +60,6 @@ jobs:
 
       - name: Create .bin package for ARM64
         run: |
-          # Create a directory for the binary
-          mkdir ${{ env.AppName }}-linux-arm64
-          # Copy the binary to the directory
-          cp ${{ env.AppName }}-linux-arm64 ${{ env.AppName }}-linux-arm64/${{ env.AppName }}
           # Create the tarball and checksum
           tar czf ${{ env.AppName }}-linux-arm64.tar.gz ${{ env.AppName }}-linux-arm64
           shasum -a 256 ${{ env.AppName }}-linux-arm64.tar.gz > ${{ env.AppName }}-linux-arm64.tar.gz.sha256
@@ -72,10 +68,6 @@ jobs:
 
       - name: Create .bin package for AMD64
         run: |
-          # Create a directory for the binary
-          mkdir ${{ env.AppName }}-linux-amd64
-          # Copy the binary to the directory
-          cp ${{ env.AppName }}-linux-amd64 ${{ env.AppName }}-linux-amd64/${{ env.AppName }}
           # Create the tarball and checksum
           tar czf ${{ env.AppName }}-linux-amd64.tar.gz ${{ env.AppName }}-linux-amd64
           shasum -a 256 ${{ env.AppName }}-linux-amd64.tar.gz > ${{ env.AppName }}-linux-amd64.tar.gz.sha256
@@ -85,7 +77,7 @@ jobs:
       - name: Create .pkg package for macOS
         run: |
           mkdir -p pkgroot/usr/local/bin/
-          cp ${{ env.AppName }}-macos-latest-amd64 pkgroot/usr/local/bin/${{ env.AppName }}
+          cp -r ${{ env.AppName }}-macos-latest-amd64 pkgroot/usr/local/bin/${{ env.AppName }}
           pkgbuild --identifier com.${{ env.AppName }}.pkg --version ${{ github.ref_name }} --install-location /usr/local/bin pkgroot ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
           rm -rf pkgroot
         working-directory: .
