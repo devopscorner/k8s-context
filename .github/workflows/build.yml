@@ -52,15 +52,6 @@ jobs:
         working-directory: src
         if: matrix.os == 'ubuntu-latest'
 
-      - name: Create .rpm package
-        run: |
-          sudo apt-get install rpm
-          sudo rpm -iUvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-          sudo dnf -y install rpm-build
-          rpmbuild -bb ${{ env.AppName }}.spec
-        working-directory: src
-        if: matrix.os == 'ubuntu-latest'
-
       - name: Create .exe package
         run: |
           GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${{ env.AppName }}-windows-amd64.exe main.go
