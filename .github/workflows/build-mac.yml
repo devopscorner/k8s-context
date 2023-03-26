@@ -18,8 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest]
-        arch: [amd64, arm64]
+        os: [macos-latest, macos-11]
+        arch: [arm64, amd64]
 
     steps:
       - name: Checkout code at release tag
@@ -44,28 +44,46 @@ jobs:
           go build -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} main.go
         working-directory: src
 
-      - name: Create .pkg package for macOS
+      - name: Create .pkg package for macOS ARM64
         run: |
           mkdir -p pkgroot/usr/local/bin/
           cp -r ${{ env.AppName }}-macos-latest-${{ matrix.arch }} pkgroot/usr/local/bin/${{ env.AppName }}
           pkgbuild --identifier com.${{ env.AppName }}.pkg --version ${{ github.ref_name }} --install-location /usr/local/bin pkgroot ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
           rm -rf pkgroot
         working-directory: src
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
 
-      - name: Create .zip package for macOS
+      - name: Create .pkg package for macOS AMD64
+        run: |
+          mkdir -p pkgroot/usr/local/bin/
+          cp -r ${{ env.AppName }}-macos-latest-${{ matrix.arch }} pkgroot/usr/local/bin/${{ env.AppName }}
+          pkgbuild --identifier com.${{ env.AppName }}.pkg --version ${{ github.ref_name }} --install-location /usr/local/bin pkgroot ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
+          rm -rf pkgroot
+        working-directory: src
+        if: matrix.os == 'macos-11' && matrix.arch == 'amd64'
+
+      - name: Create .zip package for macOS ARM64
         run: |
           mkdir ${env.AppName}-macos-${{ matrix.arch }}
           cp ${{ env.AppName }}-macos-latest-${{ matrix.arch }} ${env.AppName}-macos-${{ matrix.arch }}/${env.AppName}}
           zip -r ${env.AppName}-macos-${{ matrix.arch }}.zip ${env.AppName}-macos-${{ matrix.arch }}/
-        working-directory: .
-        if: matrix.os == 'macos-latest'
+        working-directory: src
+        if: matrix.os == 'macos-latest' && matrix.arch == 'arm64'
+
+      - name: Create .zip package for macOS AMD64
+        run: |
+          mkdir ${env.AppName}-macos-${{ matrix.arch }}
+          cp ${{ env.AppName }}-macos-latest-${{ matrix.arch }} ${env.AppName}-macos-${{ matrix.arch }}/${env.AppName}}
+          zip -r ${env.AppName}-macos-${{ matrix.arch }}.zip ${env.AppName}-macos-${{ matrix.arch }}/
+        working-directory: src
+        if: matrix.os == 'macos-11' && matrix.arch == 'amd64'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.AppName }}
           path: |
-            ${env.AppName}-${{ matrix.os }}-${{ matrix.arch }}.pkg
-            ${env.AppName}-macos-amd64.zip
+            ${env.AppName}-macos-arm64.pkg
+            ${env.AppName}-macos-amd64.pkg
             ${env.AppName}-macos-arm64.zip
+            ${env.AppName}-macos-amd64.zip
