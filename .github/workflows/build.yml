@@ -73,8 +73,7 @@ jobs:
 
       - name: Create .exe package
         run: |
-          goversioninfo -o versioninfo_windows_amd64.syso
-          GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o myapp-windows-amd64.exe main.go
+          GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${{ env.AppName }}-windows-amd64.exe main.go
         working-directory: src
         if: matrix.os == 'windows-latest'
 
