@@ -61,16 +61,16 @@ jobs:
       - name: Create .bin package for ARM64
         run: |
           # Create the tarball and checksum
-          tar czf ${{ env.AppName }}-linux-arm64.tar.gz ${{ env.AppName }}-linux-arm64
-          shasum -a 256 ${{ env.AppName }}-linux-arm64.tar.gz > ${{ env.AppName }}-linux-arm64.tar.gz.sha256
+          tar czf ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}
+          shasum -a 256 ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz > ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz.sha256
         working-directory: src
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
 
       - name: Create .bin package for AMD64
         run: |
           # Create the tarball and checksum
-          tar czf ${{ env.AppName }}-linux-amd64.tar.gz ${{ env.AppName }}-linux-amd64
-          shasum -a 256 ${{ env.AppName }}-linux-amd64.tar.gz > ${{ env.AppName }}-linux-amd64.tar.gz.sha256
+          tar czf ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}
+          shasum -a 256 ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz > ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz.sha256
         working-directory: src
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
 
