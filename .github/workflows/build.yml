@@ -34,7 +34,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          go mod download
+          cd src && go mod tidy
 
       - name: Build binary
         run: |
