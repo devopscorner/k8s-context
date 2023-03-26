@@ -210,10 +210,7 @@ func DescribePods(pod *corev1.Pod) {
 }
 
 func DescribePodsDetail(pod *corev1.Pod) {
-	var (
-		container_port string
-		state          string
-	)
+	var state string
 
 	// Print detailed information about the pod
 	fmt.Printf("Name:      \t%s\n", pod.ObjectMeta.Name)
@@ -256,11 +253,14 @@ func DescribePodsDetail(pod *corev1.Pod) {
 			fmt.Printf("    Image:        \t%s\n", container.Image)
 			fmt.Printf("    Image ID:     \t%s\n", containerStatus.ImageID)
 
-			if container.Ports != nil {
-				fmt.Printf("    Port: \t\t%v\n", container.Ports)
+			if len(pod.Spec.Containers[0].Ports) > 0 {
+				ports := ""
+				for _, p := range pod.Spec.Containers[0].Ports {
+					ports += fmt.Sprintf("%d/%s, ", p.ContainerPort, p.Protocol)
+				}
+				fmt.Printf("    Port(s):\t\t%s\n", ports[:len(ports)-2])
 			} else {
-				container_port = "<none>"
-				fmt.Printf("    Port: \t\t%v\n", container_port)
+				fmt.Printf("    Port(s):\t\t<none>\n")
 			}
 
 			if len(pod.Spec.Containers[0].Ports) > 0 {
