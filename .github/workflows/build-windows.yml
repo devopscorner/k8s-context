@@ -48,7 +48,7 @@ jobs:
         run: |
           GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe main.go
         working-directory: src
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.arch == 'amd64'
 
       - name: Create .zip package for Windows
         run: |
@@ -56,12 +56,12 @@ jobs:
           cp ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}/${env.AppName}.exe
           zip -r ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.zip ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}/
         working-directory: src
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.arch == 'amd64'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.AppName }}
           path: |
-            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.exe
+            ${{ env.AppName }}-windows-amd64.exe
             ${{ env.AppName }}-windows-amd64.zip

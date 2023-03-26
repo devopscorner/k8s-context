@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        arch: [amd64, arm64]
+        arch: [amd64]
 
     steps:
       - name: Checkout code at release tag
@@ -50,21 +50,20 @@ jobs:
           sudo gem install fpm
           fpm -s dir -t deb -n ${{ env.AppName }} -v ${{ github.ref_name }} ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}=/usr/local/bin/
         working-directory: src
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
 
-      - name: Create .zip package for Linux
+      - name: Create .zip package for Linux AMD64
         run: |
           mkdir ${env.AppName}-linux-${{ matrix.arch }}
           cp ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} ${env.AppName}-linux-${{ matrix.arch }}/${env.AppName}}
           zip -r ${env.AppName}-linux-${{ matrix.arch }}.zip ${env.AppName}-linux-${{ matrix.arch }}/
         working-directory: src
-        if: matrix.os == 'ubuntu-latest
+        if: matrix.os == 'ubuntu-latest && matrix.arch == 'amd64'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.AppName }}
           path: |
-            ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.deb
+            ${{ env.AppName }}-linux-amd64.deb
             ${{ env.AppName }}-linux-amd64.zip
-            ${{ env.AppName }}-linux-arm64.zip
