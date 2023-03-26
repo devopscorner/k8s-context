@@ -34,20 +34,22 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd src && go mod tidy
+          go mod tidy
+        working-directory: src
 
       - name: Build binary
         run: |
           GOOS=${{ matrix.os }}
           GOARCH=${{ matrix.arch }}
-          cd src && go build -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} main.go
+          go build -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} main.go
+        working-directory: src
 
       - name: Create .deb package
         run: |
           sudo apt-get install ruby-dev rubygems build-essential
           sudo gem install fpm
           fpm -s dir -t deb -n ${{ env.AppName }} -v ${{ github.ref_name }} ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}=/usr/local/bin/
-        working-directory: .
+        working-directory: src
         if: matrix.os == 'ubuntu-latest'
 
       - name: Create .rpm package
@@ -56,7 +58,7 @@ jobs:
           sudo rpm -iUvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
           sudo dnf -y install rpm-build
           rpmbuild -bb ${{ env.AppName }}.spec
-        working-directory: .
+        working-directory: src
         if: matrix.os == 'ubuntu-latest'
 
       - name: Create .exe package
@@ -64,21 +66,21 @@ jobs:
           go get -u github.com/josephspurrier/goversioninfo/cmd/goversioninfo
           goversioninfo -o versioninfo_windows_amd64.syso
           GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -linkmode internal" -o ${{ env.AppName }}-windows-amd64.exe main.go
-        working-directory: .
+        working-directory: src
         if: matrix.os == 'windows-latest'
 
       - name: Create .bin package for ARM64
         run: |
           tar czf ${{ env.AppName }}-linux-arm64.tar.gz ${{ env.AppName }}-linux-arm64
           shasum -a 256 ${{ env.AppName }}-linux-arm64.tar.gz > ${{ env.AppName }}-linux-arm64.tar.gz.sha256
-        working-directory: .
+        working-directory: src
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
 
       - name: Create .bin package for AMD64
         run: |
           tar czf ${{ env.AppName }}-linux-amd64.tar.gz ${{ env.AppName }}-linux-amd64
           shasum -a 256 ${{ env.AppName }}-linux-amd64.tar.gz > ${{ env.AppName }}-linux-amd64.tar.gz.sha256
-        working-directory: .
+        working-directory: src
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
 
       - name: Upload packages
