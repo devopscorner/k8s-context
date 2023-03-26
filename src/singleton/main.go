@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,6 +27,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -35,7 +42,7 @@ const (
 
 `
 	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.6"
+	VERSION = "v1.1.7"
 )
 
 var (
@@ -123,6 +130,7 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 		"RESTARTS",
 		"AGE",
 		"IMAGE",
+		"NODE",
 	})
 
 	table.SetAutoFormatHeaders(false)
@@ -136,6 +144,7 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 		ready, total := CalculateReadiness(&pod)
 		age := HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
 		image := strings.Join(GetContainerImages(&pod), ", ")
+		node := pod.Spec.NodeName
 
 		table.Append([]string{
 			pod.Name,
@@ -144,6 +153,7 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 			strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
 			age,
 			image,
+			node,
 		})
 	}
 	table.Render()
@@ -240,6 +250,163 @@ func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
 	table.Render()
 }
 
+func DescribePods(pod *corev1.Pod) {
+	// Print detailed information about the pod
+	fmt.Printf("Name: \t\t%s\n", pod.ObjectMeta.Name)
+	fmt.Printf("Namespace: \t%s\n", pod.ObjectMeta.Namespace)
+	labelsJSON, err := json.MarshalIndent(pod.ObjectMeta.Labels, "", "\t")
+	if err != nil {
+		fmt.Println("Error marshaling labels to JSON:", err)
+	} else {
+		fmt.Println("Labels:\n", string(labelsJSON))
+	}
+	fmt.Printf("Status: \t%s\n", pod.Status.Phase)
+	fmt.Printf("IP Address: \t%s\n", pod.Status.PodIP)
+	fmt.Printf("Node Name: \t%s\n", pod.Spec.NodeName)
+}
+
+func GetFreePort() (int, error) {
+	// listen on a random port
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+
+	// extract the port number
+	addr := l.Addr().(*net.TCPAddr)
+	port := addr.Port
+
+	return port, nil
+}
+
+func BoolToString(value corev1.ConditionStatus) string {
+	if value == corev1.ConditionTrue {
+		return "True"
+	}
+	return "False"
+}
+
+func ByteCountSI(b int64) string {
+	const unit = 1000
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
+}
+
+func DescribeNode(node *corev1.Node) {
+	// Print detailed information about the node
+	fmt.Println("Name: \t", node.ObjectMeta.Name)
+
+	labelsJSON, err := json.MarshalIndent(node.ObjectMeta.Labels, "", "\t")
+	if err != nil {
+		fmt.Println("Error marshaling labels to JSON:", err)
+	} else {
+		fmt.Println("Labels:\n", string(labelsJSON))
+	}
+
+	addrs := node.Status.Addresses
+	fmt.Println("Addresses:")
+	for _, addr := range addrs {
+		fmt.Printf("  - %s: %s\n", addr.Type, addr.Address)
+	}
+
+	fmt.Println("Allocatable Resources:")
+	for resourceName, quantity := range node.Status.Allocatable {
+		fmt.Printf("  - %s: %s\n", resourceName, quantity.String())
+	}
+
+	fmt.Println("Capacity:")
+	for resourceName, quantity := range node.Status.Capacity {
+		fmt.Printf("  - %s: %s\n", resourceName, quantity.String())
+	}
+
+	fmt.Println("Conditions:")
+	for _, condition := range node.Status.Conditions {
+		fmt.Printf("  - %s: %s\n", condition.Type, BoolToString(condition.Status))
+	}
+
+	fmt.Println("Daemon Endpoint:")
+	// endpoint := n.Status.DaemonEndpoints.KubeletEndpoint
+	// fmt.Printf("  - Kubelet Endpoint: %s\n", endpoint.String())
+	fmt.Printf("  - Kubelet Endpoint Port: %d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
+
+	fmt.Println("Images:")
+	for _, image := range node.Status.Images {
+		fmt.Printf("  - %s: %d\n", image.Names[0], image.SizeBytes)
+	}
+
+	fmt.Println("Node Info:")
+	fmt.Printf("  - Machine ID: \t\t%s\n", node.Status.NodeInfo.MachineID)
+	fmt.Printf("  - System UUID: \t\t%s\n", node.Status.NodeInfo.SystemUUID)
+	fmt.Printf("  - Boot ID: \t\t\t%s\n", node.Status.NodeInfo.BootID)
+	fmt.Printf("  - OS Image: \t\t\t%s\n", node.Status.NodeInfo.OSImage)
+	fmt.Printf("  - Kernel Version: \t\t%s\n", node.Status.NodeInfo.KernelVersion)
+	fmt.Printf("  - Container Runtime Version: \t%s\n", node.Status.NodeInfo.ContainerRuntimeVersion)
+	fmt.Printf("  - Kubelet Version: \t\t%s\n", node.Status.NodeInfo.KubeletVersion)
+	fmt.Printf("  - Kube-Proxy Version: \t%s\n", node.Status.NodeInfo.KubeProxyVersion)
+	fmt.Printf("  - Operating System: \t\t%s\n", node.Status.NodeInfo.OperatingSystem)
+	fmt.Printf("  - Architecture: \t\t%s\n", node.Status.NodeInfo.Architecture)
+}
+
+func DescribeNodeTable(node *corev1.Node) {
+	fmt.Printf("Name:\t%s\n", node.Name)
+
+	labels, _ := json.MarshalIndent(node.Labels, "", "\t")
+	fmt.Printf("Labels:\n%s\n", string(labels))
+
+	addresses := node.Status.Addresses
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Type", "Address"})
+	for _, addr := range addresses {
+		table.Append([]string{string(addr.Type), addr.Address})
+	}
+	table.Render()
+
+	table = tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Resource", "Allocatable", "Capacity"})
+	allocatable := node.Status.Allocatable
+	capacity := node.Status.Capacity
+	for resourceName, quantity := range allocatable {
+		capacityQuantity := capacity[resourceName]
+		table.Append([]string{string(resourceName), quantity.String(), capacityQuantity.String()})
+	}
+	table.Render()
+
+	table = tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Condition", "Status"})
+	for _, condition := range node.Status.Conditions {
+		table.Append([]string{string(condition.Type), BoolToString(condition.Status)})
+	}
+	table.Render()
+
+	fmt.Printf("Daemon Endpoint Port:\t%d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
+
+	table = tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Size"})
+	for _, image := range node.Status.Images {
+		table.Append([]string{image.Names[0], ByteCountSI(image.SizeBytes)})
+	}
+	table.Render()
+
+	fmt.Printf("Machine ID:\t\t%s\n", node.Status.NodeInfo.MachineID)
+	fmt.Printf("System UUID:\t\t%s\n", node.Status.NodeInfo.SystemUUID)
+	fmt.Printf("Boot ID:\t\t%s\n", node.Status.NodeInfo.BootID)
+	fmt.Printf("OS Image:\t\t%s\n", node.Status.NodeInfo.OSImage)
+	fmt.Printf("Kernel Version:\t\t%s\n", node.Status.NodeInfo.KernelVersion)
+	fmt.Printf("Container Runtime Version:\t%s\n", node.Status.NodeInfo.ContainerRuntimeVersion)
+	fmt.Printf("Kubelet Version:\t%s\n", node.Status.NodeInfo.KubeletVersion)
+	fmt.Printf("Kube-Proxy Version:\t%s\n", node.Status.NodeInfo.KubeProxyVersion)
+	fmt.Printf("Operating System:\t%s\n", node.Status.NodeInfo.OperatingSystem)
+	fmt.Printf("Architecture:\t\t%s\n", node.Status.NodeInfo.Architecture)
+}
+
 // -------------------------------------------------------------------
 // menus.go
 // -------------------------------------------------------------------
@@ -330,11 +497,11 @@ func GetCommands() []*cobra.Command {
 			if err := kc.Load(); err != nil {
 				return err
 			}
-			selectedConfig = strings.Join(kc.Files, "\n")
+			selectedConfig := strings.Join(kc.Files, "\n")
 			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", selectedConfig)
 
 			// Get the map of context name to context config
-			configBytes, err = os.ReadFile(selectedConfig)
+			configBytes, err := os.ReadFile(selectedConfig)
 			config, err := clientcmd.Load(configBytes)
 			if err != nil {
 				return err
@@ -498,6 +665,228 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
+	showCmd := &cobra.Command{
+		Use:   "show",
+		Short: "Describe / show kubernetes resources (po, logs, port, node)",
+		Long:  "Describe / show Kubernetes resources: pods (po), logs, port-forward (port), node",
+	}
+
+	// Add subcommands for each resource type
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "po [pods]",
+		Short: "Describe a specific pods",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("pod name not specified")
+			}
+
+			clientset, err := GetClientSet(kubeconfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			namespaces, err := cmd.Flags().GetStringSlice("namespace")
+			if err != nil {
+				return err
+			}
+
+			for _, namespace := range namespaces {
+				for _, pod := range args {
+					po, err := clientset.CoreV1().Pods(namespace).Get(ctx, pod, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					DescribePods(po)
+				}
+			}
+
+			return nil
+		},
+	})
+
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "logs [pods]",
+		Short: "Show logs from a specific pods",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("pod name not specified")
+			}
+
+			clientset, err := GetClientSet(kubeconfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			namespaces, err := cmd.Flags().GetStringSlice("namespace")
+			if err != nil {
+				return err
+			}
+
+			for _, namespace := range namespaces {
+				for _, pod := range args {
+					// Get logs from the pod
+					req := clientset.CoreV1().Pods(namespace).GetLogs(pod, &corev1.PodLogOptions{})
+					stream, err := req.Stream(ctx)
+					if err != nil {
+						return err
+					}
+					defer stream.Close()
+
+					// Print the logs
+					buf := new(bytes.Buffer)
+					_, err = io.Copy(buf, stream)
+					if err != nil {
+						return err
+					}
+					fmt.Printf("Logs from pod %s:\n%s\n", pod, buf.String())
+				}
+			}
+
+			return nil
+		},
+	})
+
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "port [pods]",
+		Short: "Show port-forward information for a specific pods",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			InitConfig()
+
+			if configBytes == nil {
+				// Print the list of context names
+				fmt.Println("No available contexts!")
+			} else {
+				// Get the map of context name to context config
+				config, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+				if err != nil {
+					return err
+				}
+
+				restConfig, err := clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{}).ClientConfig()
+				if err != nil {
+					return err
+				}
+
+				if err != nil {
+					return err
+				}
+
+				if len(args) < 1 {
+					return fmt.Errorf("pod name not specified")
+				}
+
+				clientset, err := GetClientSet(kubeconfig)
+				if err != nil {
+					return err
+				}
+
+				ctx := context.Background()
+				namespaces, err := cmd.Flags().GetStringSlice("namespace")
+				if err != nil {
+					return err
+				}
+
+				for _, namespace := range namespaces {
+					for _, pod := range args {
+						// Get the pod information
+						po, err := clientset.CoreV1().Pods(namespace).Get(ctx, pod, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+
+						// Get a random port to use for port forwarding
+						port, err := GetFreePort()
+						if err != nil {
+							return err
+						}
+
+						// Create the port forwarding request
+						req := clientset.CoreV1().RESTClient().Post().
+							Resource("pods").
+							Name(pod).
+							Namespace(po.Namespace).
+							SubResource("portforward")
+
+						transport, upgrader, err := spdy.RoundTripperFor(restConfig)
+						if err != nil {
+							return err
+						}
+						dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", req.URL())
+
+						// Start the port forwarding
+						stopChan := make(chan struct{})
+						defer close(stopChan)
+						go func() {
+							out := new(bytes.Buffer)
+							errOut := new(bytes.Buffer)
+							pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", port, port)}, stopChan, make(chan struct{}), out, errOut)
+							if err != nil {
+								fmt.Printf("Error forwarding port: %v\n", err)
+							}
+							err = pf.ForwardPorts()
+							if err != nil {
+								fmt.Printf("Error forwarding port: %v\n", err)
+							}
+							fmt.Println(out.String())
+						}()
+
+						// Wait for the port forwarding to start
+						time.Sleep(time.Second)
+
+						// Print the port forwarding information
+						fmt.Printf("Port forwarding for pod %s:\n", pod)
+						fmt.Printf("Local port: \t%d\n", port)
+						fmt.Printf("Remote port: \t%d\n", port)
+
+						// Prompt the user to stop the port forwarding
+						var response string
+						prompt := &survey.Select{
+							Message: "Press Enter to stop port forwarding...",
+							Options: []string{"Yes"},
+						}
+						survey.AskOne(prompt, &response)
+
+						return nil
+					}
+				}
+			}
+
+			return nil
+		},
+	})
+
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "node [node]",
+		Short: "Describe a specific node",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("node name not specified")
+			}
+
+			clientset, err := GetClientSet(kubeconfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			if err != nil {
+				return err
+			}
+
+			node := args[0]
+
+			n, err := clientset.CoreV1().Nodes().Get(ctx, node, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+
+			DescribeNode(n)
+			return nil
+		},
+	})
+
 	switchContextCmd := &cobra.Command{
 		Use:   "switch",
 		Short: "Switch to different context",
@@ -519,20 +908,26 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
-	getCmd.Flags().StringSlice("namespace", []string{}, "Namespaces to filter resources by (comma-separated)")
+	getCmd.PersistentFlags().StringSliceP("namespace", "n", []string{}, "Namespaces to filter resources by (comma-separated)")
+
 	listContextsCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
+
+	// Add the namespace flag to the show command
+	showCmd.PersistentFlags().StringSliceP("namespace", "n", []string{}, "Namespace to use. Use once for each namespace (default: all namespaces)")
+	showCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
+
 	switchContextCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
 
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
 
-	rootCmd.AddCommand(versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, switchContextCmd)
+	rootCmd.AddCommand(versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, showCmd, switchContextCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %v", err)
 	}
 
-	return []*cobra.Command{versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, switchContextCmd}
+	return []*cobra.Command{versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, showCmd, switchContextCmd}
 }
 
 // -------------------------------------------------------------------
