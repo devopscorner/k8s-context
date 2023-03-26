@@ -198,14 +198,32 @@ func DescribePods(pod *corev1.Pod) {
 	// Print detailed information about the pod
 	fmt.Printf("Name: \t\t%s\n", pod.ObjectMeta.Name)
 	fmt.Printf("Namespace: \t%s\n", pod.ObjectMeta.Namespace)
-	labelsJSON, err := json.MarshalIndent(pod.ObjectMeta.Labels, "", "\t")
+	fmt.Printf("Priority:  \t%d\n", pod.Spec.Priority)
+
+	// labelsJSON, err := json.MarshalIndent(pod.ObjectMeta.Labels, "", "\t")
+	// if err != nil {
+	// 	fmt.Println("Error marshaling labels to JSON:", err)
+	// } else {
+	// 	fmt.Println("Labels:\n", string(labelsJSON))
+	// }
+
+	// Convert labels to YAML
+	labelsYAML, err := yaml.Marshal(pod.ObjectMeta.Labels)
 	if err != nil {
-		fmt.Println("Error marshaling labels to JSON:", err)
+		fmt.Println("Error marshaling labels to YAML:", err)
 	} else {
-		fmt.Println("Labels:\n", string(labelsJSON))
+		fmt.Printf("Labels:")
+		yamlLines := strings.Split(string(labelsYAML), "\n")
+		for _, line := range yamlLines {
+			fmt.Printf("\t\t%s\n", line)
+		}
 	}
-	fmt.Printf("Status: \t%s\n", pod.Status.Phase)
-	fmt.Printf("IP Address: \t%s\n", pod.Status.PodIP)
+	fmt.Printf("Status:      \t%s\n", pod.Status.Phase)
+	fmt.Printf("IP:          \t%s\n", pod.Status.PodIP)
+	fmt.Printf("IPs:\n")
+	for _, podIP := range pod.Status.PodIPs {
+		fmt.Printf("  IP: \t\t%s\n", podIP.IP)
+	}
 	fmt.Printf("Node Name: \t%s\n", pod.Spec.NodeName)
 }
 
@@ -450,40 +468,71 @@ func ByteCountSI(b int64) string {
 
 func DescribeNode(node *corev1.Node) {
 	// Print detailed information about the node
-	fmt.Println("Name: \t", node.ObjectMeta.Name)
+	fmt.Println("Name:\t", node.ObjectMeta.Name)
 
-	labelsJSON, err := json.MarshalIndent(node.ObjectMeta.Labels, "", "\t")
+	// labelsJSON, err := json.MarshalIndent(node.ObjectMeta.Labels, "", "\t")
+	// if err != nil {
+	// 	fmt.Println("Error marshaling labels to JSON:", err)
+	// } else {
+	// 	fmt.Println("Labels:\n", string(labelsJSON))
+	// }
+
+	// Convert labels to YAML
+	labelsYAML, err := yaml.Marshal(node.ObjectMeta.Labels)
 	if err != nil {
-		fmt.Println("Error marshaling labels to JSON:", err)
+		fmt.Println("Error marshaling labels to YAML:", err)
 	} else {
-		fmt.Println("Labels:\n", string(labelsJSON))
+		fmt.Printf("Labels:")
+		yamlLines := strings.Split(string(labelsYAML), "\n")
+		for _, line := range yamlLines {
+			fmt.Printf("\t %s\n", line)
+		}
 	}
-
 	addrs := node.Status.Addresses
 	fmt.Println("Addresses:")
 	for _, addr := range addrs {
-		fmt.Printf("  - %s: %s\n", addr.Type, addr.Address)
+		fmt.Printf("  %s: \t%s\n", addr.Type, addr.Address)
 	}
 
 	fmt.Println("Allocatable Resources:")
 	for resourceName, quantity := range node.Status.Allocatable {
-		fmt.Printf("  - %s: %s\n", resourceName, quantity.String())
+		if resourceName == "memory" || resourceName == "pods" || resourceName == "memory" {
+			fmt.Printf("  %s: \t\t%s\n", resourceName, quantity.String())
+		} else if resourceName == "cpu" {
+			fmt.Printf("  %s: \t\t\t%s\n", resourceName, quantity.String())
+		} else if resourceName == "attachable-volumes-aws-ebs" {
+			fmt.Printf("  %s: %s\n", resourceName, quantity.String())
+		} else {
+			fmt.Printf("  %s: \t%s\n", resourceName, quantity.String())
+		}
 	}
 
 	fmt.Println("Capacity:")
-	for resourceName, quantity := range node.Status.Capacity {
-		fmt.Printf("  - %s: %s\n", resourceName, quantity.String())
+	for capacity, quantity := range node.Status.Capacity {
+		if capacity == "memory" || capacity == "pods" || capacity == "memory" {
+			fmt.Printf("  %s: \t\t%s\n", capacity, quantity.String())
+		} else if capacity == "cpu" {
+			fmt.Printf("  %s: \t\t\t%s\n", capacity, quantity.String())
+		} else if capacity == "attachable-volumes-aws-ebs" {
+			fmt.Printf("  %s: %s\n", capacity, quantity.String())
+		} else {
+			fmt.Printf("  %s: \t%s\n", capacity, quantity.String())
+		}
 	}
 
 	fmt.Println("Conditions:")
 	for _, condition := range node.Status.Conditions {
-		fmt.Printf("  - %s: %s\n", condition.Type, BoolToString(condition.Status))
+		if condition.Type == "MemoryPressure" || condition.Type == "DiskPressure" {
+			fmt.Printf("  %s: \t%s\n", condition.Type, BoolToString(condition.Status))
+		} else {
+			fmt.Printf("  %s: \t\t%s\n", condition.Type, BoolToString(condition.Status))
+		}
 	}
 
 	fmt.Println("Daemon Endpoint:")
 	// endpoint := n.Status.DaemonEndpoints.KubeletEndpoint
 	// fmt.Printf("  - Kubelet Endpoint: %s\n", endpoint.String())
-	fmt.Printf("  - Kubelet Endpoint Port: %d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
+	fmt.Printf("  Kubelet Endpoint Port: %d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
 
 	fmt.Println("Images:")
 	for _, image := range node.Status.Images {
@@ -491,16 +540,16 @@ func DescribeNode(node *corev1.Node) {
 	}
 
 	fmt.Println("Node Info:")
-	fmt.Printf("  - Machine ID: \t\t%s\n", node.Status.NodeInfo.MachineID)
-	fmt.Printf("  - System UUID: \t\t%s\n", node.Status.NodeInfo.SystemUUID)
-	fmt.Printf("  - Boot ID: \t\t\t%s\n", node.Status.NodeInfo.BootID)
-	fmt.Printf("  - OS Image: \t\t\t%s\n", node.Status.NodeInfo.OSImage)
-	fmt.Printf("  - Kernel Version: \t\t%s\n", node.Status.NodeInfo.KernelVersion)
-	fmt.Printf("  - Container Runtime Version: \t%s\n", node.Status.NodeInfo.ContainerRuntimeVersion)
-	fmt.Printf("  - Kubelet Version: \t\t%s\n", node.Status.NodeInfo.KubeletVersion)
-	fmt.Printf("  - Kube-Proxy Version: \t%s\n", node.Status.NodeInfo.KubeProxyVersion)
-	fmt.Printf("  - Operating System: \t\t%s\n", node.Status.NodeInfo.OperatingSystem)
-	fmt.Printf("  - Architecture: \t\t%s\n", node.Status.NodeInfo.Architecture)
+	fmt.Printf("  Machine ID: \t\t\t%s\n", node.Status.NodeInfo.MachineID)
+	fmt.Printf("  System UUID: \t\t\t%s\n", node.Status.NodeInfo.SystemUUID)
+	fmt.Printf("  Boot ID: \t\t\t%s\n", node.Status.NodeInfo.BootID)
+	fmt.Printf("  OS Image: \t\t\t%s\n", node.Status.NodeInfo.OSImage)
+	fmt.Printf("  Kernel Version: \t\t%s\n", node.Status.NodeInfo.KernelVersion)
+	fmt.Printf("  Container Runtime Version: \t%s\n", node.Status.NodeInfo.ContainerRuntimeVersion)
+	fmt.Printf("  Kubelet Version: \t\t%s\n", node.Status.NodeInfo.KubeletVersion)
+	fmt.Printf("  Kube-Proxy Version: \t\t%s\n", node.Status.NodeInfo.KubeProxyVersion)
+	fmt.Printf("  Operating System: \t\t%s\n", node.Status.NodeInfo.OperatingSystem)
+	fmt.Printf("  Architecture: \t\t%s\n", node.Status.NodeInfo.Architecture)
 }
 
 func DescribeNodeTable(node *corev1.Node) {
