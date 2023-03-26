@@ -33,33 +33,39 @@ jobs:
           go-version: 1.19
 
       - name: Install dependencies
+        working-directory: src
         run: |
           go mod tidy
-        working-directory: src
 
       - name: Build binary
+        working-directory: src
         run: |
           GOOS=${{ matrix.os }}
           GOARCH=${{ matrix.arch }}
           go build -o ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }} main.go
+
+      - name: Install Xcode command line tools
         working-directory: src
+        if: matrix.os == 'macos-latest'
+        run: |
+          xcode-select --install
 
       - name: Create .pkg package for macOS ARM64
+        working-directory: src
+        if: matrix.os == 'macos-latest'
         run: |
           mkdir -p pkgroot/usr/local/bin/
           cp -r ${{ env.AppName }}-macos-latest-${{ matrix.arch }} pkgroot/usr/local/bin/${{ env.AppName }}
           pkgbuild --identifier com.${{ env.AppName }}.pkg --version ${{ github.ref_name }} --install-location /usr/local/bin pkgroot ${{ env.AppName }}-${{ matrix.os }}-${{ matrix.arch }}.pkg
           rm -rf pkgroot
-        working-directory: src
-        if: matrix.os == 'macos-latest'
 
       - name: Create .zip package for macOS ARM64
+        working-directory: src
+        if: matrix.os == 'macos-latest'
         run: |
           mkdir -p ${env.AppName}-macos-${{ matrix.arch }}
           cp -r ${{ env.AppName }}-macos-latest-${{ matrix.arch }} ${env.AppName}-macos-${{ matrix.arch }}/${env.AppName}}
           zip -r ${env.AppName}-macos-${{ matrix.arch }}.zip ${env.AppName}-macos-${{ matrix.arch }}/
-        working-directory: src
-        if: matrix.os == 'macos-latest'
 
       - name: Upload packages
         uses: actions/upload-artifact@v2
