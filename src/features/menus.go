@@ -1,11 +1,15 @@
 package features
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/sirupsen/logrus"
@@ -13,6 +17,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -26,7 +32,7 @@ const (
 
 `
 	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.6"
+	VERSION = "v1.1.7"
 )
 
 func GetCommands() []*cobra.Command {
@@ -116,11 +122,11 @@ func GetCommands() []*cobra.Command {
 			if err := kc.Load(); err != nil {
 				return err
 			}
-			selectedConfig = strings.Join(kc.Files, "\n")
+			selectedConfig := strings.Join(kc.Files, "\n")
 			fmt.Printf("Loaded kubeconfig file(s):\n%s\n", selectedConfig)
 
 			// Get the map of context name to context config
-			configBytes, err = os.ReadFile(selectedConfig)
+			configBytes, err := os.ReadFile(selectedConfig)
 			config, err := clientcmd.Load(configBytes)
 			if err != nil {
 				return err
@@ -284,6 +290,228 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
+	showCmd := &cobra.Command{
+		Use:   "show",
+		Short: "Describe / show kubernetes resources (po, logs, port, node)",
+		Long:  "Describe / show Kubernetes resources: pods (po), logs, port-forward (port), node",
+	}
+
+	// Add subcommands for each resource type
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "po [pods]",
+		Short: "Describe a specific pods",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("pod name not specified")
+			}
+
+			clientset, err := GetClientSet(kubeconfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			namespaces, err := cmd.Flags().GetStringSlice("namespace")
+			if err != nil {
+				return err
+			}
+
+			for _, namespace := range namespaces {
+				for _, pod := range args {
+					po, err := clientset.CoreV1().Pods(namespace).Get(ctx, pod, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					DescribePods(po)
+				}
+			}
+
+			return nil
+		},
+	})
+
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "logs [pods]",
+		Short: "Show logs from a specific pods",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("pod name not specified")
+			}
+
+			clientset, err := GetClientSet(kubeconfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			namespaces, err := cmd.Flags().GetStringSlice("namespace")
+			if err != nil {
+				return err
+			}
+
+			for _, namespace := range namespaces {
+				for _, pod := range args {
+					// Get logs from the pod
+					req := clientset.CoreV1().Pods(namespace).GetLogs(pod, &corev1.PodLogOptions{})
+					stream, err := req.Stream(ctx)
+					if err != nil {
+						return err
+					}
+					defer stream.Close()
+
+					// Print the logs
+					buf := new(bytes.Buffer)
+					_, err = io.Copy(buf, stream)
+					if err != nil {
+						return err
+					}
+					fmt.Printf("Logs from pod %s:\n%s\n", pod, buf.String())
+				}
+			}
+
+			return nil
+		},
+	})
+
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "port [pods]",
+		Short: "Show port-forward information for a specific pods",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			InitConfig()
+
+			if configBytes == nil {
+				// Print the list of context names
+				fmt.Println("No available contexts!")
+			} else {
+				// Get the map of context name to context config
+				config, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+				if err != nil {
+					return err
+				}
+
+				restConfig, err := clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{}).ClientConfig()
+				if err != nil {
+					return err
+				}
+
+				if err != nil {
+					return err
+				}
+
+				if len(args) < 1 {
+					return fmt.Errorf("pod name not specified")
+				}
+
+				clientset, err := GetClientSet(kubeconfig)
+				if err != nil {
+					return err
+				}
+
+				ctx := context.Background()
+				namespaces, err := cmd.Flags().GetStringSlice("namespace")
+				if err != nil {
+					return err
+				}
+
+				for _, namespace := range namespaces {
+					for _, pod := range args {
+						// Get the pod information
+						po, err := clientset.CoreV1().Pods(namespace).Get(ctx, pod, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+
+						// Get a random port to use for port forwarding
+						port, err := GetFreePort()
+						if err != nil {
+							return err
+						}
+
+						// Create the port forwarding request
+						req := clientset.CoreV1().RESTClient().Post().
+							Resource("pods").
+							Name(pod).
+							Namespace(po.Namespace).
+							SubResource("portforward")
+
+						transport, upgrader, err := spdy.RoundTripperFor(restConfig)
+						if err != nil {
+							return err
+						}
+						dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", req.URL())
+
+						// Start the port forwarding
+						stopChan := make(chan struct{})
+						defer close(stopChan)
+						go func() {
+							out := new(bytes.Buffer)
+							errOut := new(bytes.Buffer)
+							pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", port, port)}, stopChan, make(chan struct{}), out, errOut)
+							if err != nil {
+								fmt.Printf("Error forwarding port: %v\n", err)
+							}
+							err = pf.ForwardPorts()
+							if err != nil {
+								fmt.Printf("Error forwarding port: %v\n", err)
+							}
+							fmt.Println(out.String())
+						}()
+
+						// Wait for the port forwarding to start
+						time.Sleep(time.Second)
+
+						// Print the port forwarding information
+						fmt.Printf("Port forwarding for pod %s:\n", pod)
+						fmt.Printf("Local port: \t%d\n", port)
+						fmt.Printf("Remote port: \t%d\n", port)
+
+						// Prompt the user to stop the port forwarding
+						var response string
+						prompt := &survey.Select{
+							Message: "Press Enter to stop port forwarding...",
+							Options: []string{"Yes"},
+						}
+						survey.AskOne(prompt, &response)
+
+						return nil
+					}
+				}
+			}
+
+			return nil
+		},
+	})
+
+	showCmd.AddCommand(&cobra.Command{
+		Use:   "node [node]",
+		Short: "Describe a specific node",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("node name not specified")
+			}
+
+			clientset, err := GetClientSet(kubeconfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			if err != nil {
+				return err
+			}
+
+			node := args[0]
+
+			n, err := clientset.CoreV1().Nodes().Get(ctx, node, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+
+			DescribeNode(n)
+			return nil
+		},
+	})
+
 	switchContextCmd := &cobra.Command{
 		Use:   "switch",
 		Short: "Switch to different context",
@@ -305,18 +533,24 @@ func GetCommands() []*cobra.Command {
 		},
 	}
 
-	getCmd.Flags().StringSlice("namespace", []string{}, "Namespaces to filter resources by (comma-separated)")
+	getCmd.PersistentFlags().StringSliceP("namespace", "n", []string{}, "Namespaces to filter resources by (comma-separated)")
+
 	listContextsCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
+
+	// Add the namespace flag to the show command
+	showCmd.PersistentFlags().StringSliceP("namespace", "n", []string{}, "Namespace to use. Use once for each namespace (default: all namespaces)")
+	showCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
+
 	switchContextCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
 
 	rootCmd := &cobra.Command{Use: "k8s-context"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
 
-	rootCmd.AddCommand(versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, switchContextCmd)
+	rootCmd.AddCommand(versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, showCmd, switchContextCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %v", err)
 	}
 
-	return []*cobra.Command{versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, switchContextCmd}
+	return []*cobra.Command{versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, showCmd, switchContextCmd}
 }
