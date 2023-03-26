@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      imageName: 'devopcorner/k8s-context'
-      appName: 'k8s-context'
+      ImageName: 'devopcorner/k8s-context'
+      AppName: 'k8s-context'
 
     strategy:
       matrix:
