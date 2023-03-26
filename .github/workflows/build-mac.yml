@@ -1,4 +1,4 @@
-name: GitHub Build and Package
+name: GitHub Build and Package Mac
 
 on:
   push:
