@@ -810,13 +810,7 @@ func GetCommands() []*cobra.Command {
 				if err != nil {
 					return err
 				}
-				contextsMap := config.Contexts
-
-				// Print the list of context names
-				fmt.Println("Available Kubernetes contexts:")
-				for contextName := range contextsMap {
-					fmt.Println(contextName)
-				}
+				ShowDetailList(config)
 			}
 			return nil
 		},
@@ -1409,6 +1403,45 @@ func ListContexts(kc *KubeConfig) error {
 		}
 		fmt.Printf("%s %s\n", prefix, contextName)
 	}
+	return nil
+}
+
+func ShowDetailList(config *clientcmdapi.Config) error {
+	contextsMap := config.Contexts
+
+	// Create a slice of context information
+	var contextInfo []struct {
+		ContextName string
+		ClusterName string
+	}
+
+	// Iterate through each context and extract the cluster and user information
+	for contextName, contextConfig := range contextsMap {
+		clusterName := contextConfig.Cluster
+		clusterConfig, found := config.Clusters[clusterName]
+		if !found {
+			return fmt.Errorf("cluster %s not found in config", clusterName)
+		}
+		contextInfo = append(contextInfo, struct {
+			ContextName string
+			ClusterName string
+		}{
+			ContextName: contextName,
+			ClusterName: clusterConfig.Server,
+		})
+	}
+
+	// Print the list of context names
+	fmt.Println("Available Kubernetes contexts:")
+
+	// Print the table of context information
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Context Name", "Cluster Name"})
+	for _, info := range contextInfo {
+		table.Append([]string{info.ContextName, info.ClusterName})
+	}
+	table.Render()
+
 	return nil
 }
 

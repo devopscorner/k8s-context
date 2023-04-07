@@ -65,13 +65,7 @@ func GetCommands() []*cobra.Command {
 				if err != nil {
 					return err
 				}
-				contextsMap := config.Contexts
-
-				// Print the list of context names
-				fmt.Println("Available Kubernetes contexts:")
-				for contextName := range contextsMap {
-					fmt.Println(contextName)
-				}
+				ShowDetailList(config)
 			}
 			return nil
 		},
