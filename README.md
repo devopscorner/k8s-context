@@ -270,6 +270,15 @@ Use "k8s-context [command] --help" for more information about a command.
     ./k8s-context get po
     ```
 
+  - Endpoints
+    ```
+    ./k8s-context get endpoints
+
+    -- or --
+
+    ./k8s-context get ep
+    ```
+
 - Get Resources By Filtering Namespace (Comma-Separated)
 
   - Namespaces
@@ -314,6 +323,15 @@ Use "k8s-context [command] --help" for more information about a command.
 
     ./k8s-context get po -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ./k8s-context get po --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ```
+
+  - Endpoints
+    ```
+    ./k8s-context get endpoints -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+
+    -- or --
+
+    ./k8s-context get ep -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ```
 
 - Show (Describe) Resources from Nodes, Pods, Logs & Port Forward
