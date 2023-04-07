@@ -1,5 +1,5 @@
 ### Builder Go ###
-FROM golang:1.19.5-alpine3.17 as builder-go
+FROM golang:alpine as builder-go
 
 WORKDIR /go/src/app
 ENV GIN_MODE=release

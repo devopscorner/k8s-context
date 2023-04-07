@@ -1,71 +1,11 @@
 {
-  "count": 4420,
-  "uniques": 298,
+  "count": 4275,
+  "uniques": 286,
   "clones": [
     {
-      "timestamp": "2023-03-12T00:00:00Z",
-      "count": 135,
-      "uniques": 79
-    },
-    {
-      "timestamp": "2023-03-13T00:00:00Z",
-      "count": 309,
-      "uniques": 126
-    },
-    {
-      "timestamp": "2023-03-14T00:00:00Z",
-      "count": 273,
-      "uniques": 135
-    },
-    {
-      "timestamp": "2023-03-15T00:00:00Z",
-      "count": 283,
-      "uniques": 135
-    },
-    {
-      "timestamp": "2023-03-16T00:00:00Z",
-      "count": 312,
-      "uniques": 144
-    },
-    {
-      "timestamp": "2023-03-17T00:00:00Z",
-      "count": 305,
-      "uniques": 117
-    },
-    {
-      "timestamp": "2023-03-18T00:00:00Z",
-      "count": 316,
-      "uniques": 126
-    },
-    {
-      "timestamp": "2023-03-19T00:00:00Z",
-      "count": 319,
-      "uniques": 131
-    },
-    {
-      "timestamp": "2023-03-20T00:00:00Z",
-      "count": 338,
-      "uniques": 130
-    },
-    {
-      "timestamp": "2023-03-21T00:00:00Z",
-      "count": 332,
-      "uniques": 135
-    },
-    {
-      "timestamp": "2023-03-22T00:00:00Z",
-      "count": 314,
-      "uniques": 135
-    },
-    {
-      "timestamp": "2023-03-23T00:00:00Z",
-      "count": 286,
-      "uniques": 133
-    },
-    {
       "timestamp": "2023-03-24T00:00:00Z",
-      "count": 298,
-      "uniques": 121
+      "count": 287,
+      "uniques": 120
     },
     {
       "timestamp": "2023-03-25T00:00:00Z",
@@ -74,8 +14,63 @@
     },
     {
       "timestamp": "2023-03-26T00:00:00Z",
-      "count": 289,
-      "uniques": 105
+      "count": 493,
+      "uniques": 139
+    },
+    {
+      "timestamp": "2023-03-27T00:00:00Z",
+      "count": 298,
+      "uniques": 127
+    },
+    {
+      "timestamp": "2023-03-28T00:00:00Z",
+      "count": 272,
+      "uniques": 118
+    },
+    {
+      "timestamp": "2023-03-29T00:00:00Z",
+      "count": 296,
+      "uniques": 129
+    },
+    {
+      "timestamp": "2023-03-30T00:00:00Z",
+      "count": 293,
+      "uniques": 131
+    },
+    {
+      "timestamp": "2023-03-31T00:00:00Z",
+      "count": 281,
+      "uniques": 124
+    },
+    {
+      "timestamp": "2023-04-01T00:00:00Z",
+      "count": 298,
+      "uniques": 119
+    },
+    {
+      "timestamp": "2023-04-02T00:00:00Z",
+      "count": 294,
+      "uniques": 123
+    },
+    {
+      "timestamp": "2023-04-03T00:00:00Z",
+      "count": 293,
+      "uniques": 123
+    },
+    {
+      "timestamp": "2023-04-04T00:00:00Z",
+      "count": 295,
+      "uniques": 120
+    },
+    {
+      "timestamp": "2023-04-05T00:00:00Z",
+      "count": 272,
+      "uniques": 115
+    },
+    {
+      "timestamp": "2023-04-06T00:00:00Z",
+      "count": 292,
+      "uniques": 133
     }
   ]
 }
