@@ -13,6 +13,6 @@ func main() {
 
 	fmt.Println(logoStyle.Styled(features.Logo))
 	fmt.Println("[[ ", appNameStyle.Styled(features.AppName), " ]] -", features.VERSION)
-	fmt.Println("=============================")
+	fmt.Println("==================================")
 	features.GetCommands()
 }

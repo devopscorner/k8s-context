@@ -43,28 +43,6 @@ func GetLabels(pod *corev1.Pod) []string {
 	return labels
 }
 
-func HumanReadableDuration(duration time.Duration) string {
-	if duration.Seconds() < 60 {
-		return fmt.Sprintf("%ds", int(duration.Seconds()))
-	} else if duration.Minutes() < 60 {
-		return fmt.Sprintf("%dm", int(duration.Minutes()))
-	} else if duration.Hours() < 24 {
-		return fmt.Sprintf("%dh", int(duration.Hours()))
-	}
-	return fmt.Sprintf("%dd", int(duration.Hours()/24))
-}
-
-func CalculateReadiness(pod *corev1.Pod) (int, int) {
-	var ready, total int
-	for _, cs := range pod.Status.ContainerStatuses {
-		if cs.Ready {
-			ready++
-		}
-		total++
-	}
-	return ready, total
-}
-
 func ShowPodsByFilter(pods *corev1.PodList) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{
@@ -121,45 +99,6 @@ func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
 		table.Append([]string{
 			name,
 			string(status),
-			age,
-		})
-	}
-	table.Render()
-}
-
-func ShowServiceByFilter(services *corev1.ServiceList) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
-		"NAME",
-		"TYPE",
-		"CLUSTER-IP",
-		"EXTERNAL-IP",
-		"PORT(S)",
-		"AGE",
-	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-
-	for _, service := range services.Items {
-		var externalIPs string
-		if len(service.Spec.ExternalIPs) > 0 {
-			externalIPs = strings.Join(service.Spec.ExternalIPs, ", ")
-		} else {
-			externalIPs = "<none>"
-		}
-		age := HumanReadableDuration(time.Since(service.ObjectMeta.CreationTimestamp.Time))
-		ports := make([]string, len(service.Spec.Ports))
-		for i, port := range service.Spec.Ports {
-			ports[i] = fmt.Sprintf("%d/%s", port.Port, string(port.Protocol))
-		}
-
-		table.Append([]string{
-			service.Name,
-			string(service.Spec.Type),
-			service.Spec.ClusterIP,
-			externalIPs,
-			strings.Join(ports, ", "),
 			age,
 		})
 	}

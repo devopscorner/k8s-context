@@ -31,8 +31,8 @@ const (
 |_|\_\___/|___/      \___\___/|_| |_|\__\___/_/\_\\__|
 
 `
-	AppName = "K8S-CONTEXT"
-	VERSION = "v1.1.7"
+	AppName = "K8S-CONTEXT (K8C)"
+	VERSION = "v1.1.8"
 )
 
 func GetCommands() []*cobra.Command {
@@ -164,8 +164,8 @@ func GetCommands() []*cobra.Command {
 
 	getCmd := &cobra.Command{
 		Use:   "get",
-		Short: "Get Kubernetes resources (ns, svc, deploy, po)",
-		Long:  "Get Kubernetes resources: namespace (ns), services (svc), deployments (deploy), pods (po)",
+		Short: "Get Kubernetes resources (ns, svc, deploy, po, ep)",
+		Long:  "Get Kubernetes resources: namespace (ns), services (svc), deployments (deploy), pods (po), endpoints (ep)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return fmt.Errorf("resource type not specified")
@@ -226,6 +226,13 @@ func GetCommands() []*cobra.Command {
 						}
 						ShowServiceByFilter(services)
 
+					case "endpoints", "ep":
+						endpoints, err := clientset.CoreV1().Endpoints(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
+						}
+						ShowEndpointByFilter(endpoints)
+
 					case "deployment", "deploy":
 						deployments, err := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
 						if err != nil {
@@ -272,6 +279,13 @@ func GetCommands() []*cobra.Command {
 							return err
 						}
 						ShowServiceByFilter(services)
+
+					case "endpoints", "ep":
+						endpoints, err := clientset.CoreV1().Endpoints(namespace).List(ctx, metav1.ListOptions{})
+						if err != nil {
+							return err
+						}
+						ShowEndpointByFilter(endpoints)
 
 					case "deployment", "deploy":
 						deployments, err := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
