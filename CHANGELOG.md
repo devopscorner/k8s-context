@@ -46,6 +46,16 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 ---
 
+### version 1.1.8
+
+- Added features `get endpoints` or `get ep`, show kubernetes endpoints
+  ```
+  ./k8s-context get endpoints -n [namespace]
+  ./k8s-context get ep -n [namespace]
+  ```
+
+---
+
 ### version 1.1.7
 
 - Added flag "-n" to make shortcut from "--namespace"
