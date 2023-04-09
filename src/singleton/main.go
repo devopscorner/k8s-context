@@ -85,12 +85,13 @@ func HumanReadableDuration(duration time.Duration) string {
 }
 
 func CalculateReadiness(pod *corev1.Pod) (int, int) {
-	var ready, total int
+	var ready int
+	total := len(pod.Spec.Containers)
+
 	for _, cs := range pod.Status.ContainerStatuses {
 		if cs.Ready {
 			ready++
 		}
-		total++
 	}
 	return ready, total
 }
@@ -274,19 +275,26 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 
 	for _, pod := range pods.Items {
 		var containerStatuses []string
-		for _, cs := range pod.Status.ContainerStatuses {
-			containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
+		if pod.Status.Phase == corev1.PodRunning && len(pod.Status.ContainerStatuses) > 0 {
+			for _, cs := range pod.Status.ContainerStatuses {
+				containerStatuses = append(containerStatuses, fmt.Sprintf("%s:%s", cs.Name, strconv.FormatBool(cs.Ready)))
+			}
 		}
 		ready, total := CalculateReadiness(&pod)
 		age := HumanReadableDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
 		image := strings.Join(GetContainerImages(&pod), ", ")
 		node := pod.Spec.NodeName
 
+		restartCount := 0
+		if len(pod.Status.ContainerStatuses) > 0 {
+			restartCount = int(pod.Status.ContainerStatuses[0].RestartCount)
+		}
+
 		table.Append([]string{
 			pod.Name,
 			fmt.Sprintf("%d/%d", ready, total),
 			string(pod.Status.Phase),
-			strconv.Itoa(int(pod.Status.ContainerStatuses[0].RestartCount)),
+			strconv.Itoa(restartCount),
 			age,
 			image,
 			node,
