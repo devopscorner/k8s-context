@@ -19,12 +19,13 @@ func HumanReadableDuration(duration time.Duration) string {
 }
 
 func CalculateReadiness(pod *corev1.Pod) (int, int) {
-	var ready, total int
+	var ready int
+	total := len(pod.Spec.Containers)
+
 	for _, cs := range pod.Status.ContainerStatuses {
 		if cs.Ready {
 			ready++
 		}
-		total++
 	}
 	return ready, total
 }
