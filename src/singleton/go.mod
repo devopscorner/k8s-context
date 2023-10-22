@@ -1,4 +1,4 @@
-module github.com/devopscorner/k8s-context/src
+module github.com/devopscorner/k8s-context/src/singleton
 
 go 1.21.3
 

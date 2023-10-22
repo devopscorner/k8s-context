@@ -65,8 +65,9 @@ Customize Kubernetes Change Context (KUBECONFIG)
 |_|\_\___/|___/      \___\___/|_| |_|\__\___/_/\_\\__|
 
 
+===================================
 [[  K8S-CONTEXT (K8C)  ]] - v1.1.9
-==================================
+===================================
 Usage:
   k8s-context [command]
 
@@ -83,7 +84,7 @@ Available Commands:
 
 Flags:
   -h, --help                help for k8s-context
-      --kubeconfig string   Path to kubeconfig file (default "/home/dfdenni/.kube/config")
+      --kubeconfig string   Path to kubeconfig file (default "/home/devopscorner/.kube/config")
 
 Use "k8s-context [command] --help" for more information about a command.
 
@@ -152,28 +153,28 @@ Use "k8s-context [command] --help" for more information about a command.
 - Running Binary
   ```
   cd src/build
-  ./k8s-context
+  ./k8c
   ```
 
 - Autocompletion Script
   ```
-  ./k8s-context completion bash|fish|powershell|zsh
+  ./k8c completion bash|fish|powershell|zsh
   ```
 
 - Using Contexts
 
   - Merge Multi Config
     ```
-    ./k8s-context merge [new-config] [config-1] [config-2] ... [config-n]
+    ./k8c merge [new-config] [config-1] [config-2] ... [config-n]
     ---
     eg: (merge into single file $HOME/.kube/config)
 
-    ./k8s-context merge $HOME/.kube/config  $HOME/.kube/config-staging-dev $HOME/.kube/config-staging-uat $HOME/.kube/config-staging-qa
+    ./k8c merge $HOME/.kube/config  $HOME/.kube/config-staging-dev $HOME/.kube/config-staging-uat $HOME/.kube/config-staging-qa
     ```
 
   - Discovery All KUBECONFIG Files Inside `~/.kube` Folder --- Interactive Mode
     ```
-    ./k8s-context load
+    ./k8c load
     ---
     Select a kubeconfig file:  [Use arrows to move, type to filter]
     > /home/devopscorner/.kube/.switch_tmp/config.1072356766.tmp
@@ -194,12 +195,12 @@ Use "k8s-context [command] --help" for more information about a command.
     -- or --
 
     ## Default KUBECONFIG path (`/.kube/config`) ##
-    ./k8s-context list
+    ./k8c list
     ---
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
 
     ## Spesific Kubeconfig ##
-    ./k8s-context list -f $HOME/.kube/config-cluster
+    ./k8c list -f $HOME/.kube/config-cluster
     ---
     Available Kubernetes contexts:
     arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
@@ -209,7 +210,7 @@ Use "k8s-context [command] --help" for more information about a command.
   - Switch (select) Context(s) --- Interactive Mode
     ```
     ## Default KUBECONFIG path (`/.kube/config`) ##
-    ./k8s-context switch
+    ./k8c switch
     ---
     ? Select a context  [Use arrows to move, type to filter]
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-lab
@@ -217,7 +218,7 @@ Use "k8s-context [command] --help" for more information about a command.
     > Changed context to: arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
 
     ## Spesific Kubeconfig ##
-    ./k8s-context switch - $HOME/.kube/config-cluster
+    ./k8c switch - $HOME/.kube/config-cluster
     ---
     ? Select a context  [Use arrows to move, type to filter]
     > arn:aws:eks:ap-southeast-1:YOUR_AWS_ACCOUNT:cluster/devopscorner-dev-staging
@@ -233,140 +234,140 @@ Use "k8s-context [command] --help" for more information about a command.
 
     -- or --
 
-    ./k8s-context switch -f $HOME/.kube/config-new-cluster
+    ./k8c switch -f $HOME/.kube/config-new-cluster
     ```
 
 - Get Resources Kubernetes
 
   - Namespaces
     ```
-    ./k8s-context get namespace
+    ./k8c get namespace
 
     -- or --
 
-    ./k8s-context get ns
+    ./k8c get ns
     ```
 
   - Services
     ```
-    ./k8s-context get services
+    ./k8c get services
 
     -- or --
 
-    ./k8s-context get svc
+    ./k8c get svc
     ```
 
   - Deployments
     ```
-    ./k8s-context get deployments
+    ./k8c get deployments
 
     -- or --
 
-    ./k8s-context get deploy
+    ./k8c get deploy
     ```
 
   - Pods
     ```
-    ./k8s-context get pods
+    ./k8c get pods
 
     -- or --
 
-    ./k8s-context get po
+    ./k8c get po
     ```
 
   - Endpoints
     ```
-    ./k8s-context get endpoints
+    ./k8c get endpoints
 
     -- or --
 
-    ./k8s-context get ep
+    ./k8c get ep
     ```
 
 - Get Resources By Filtering Namespace (Comma-Separated)
 
   - Namespaces
     ```
-    ./k8s-context get namespace -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get namespace --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get namespace -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get namespace --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
 
     -- or --
 
-    ./k8s-context get ns -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get ns --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get ns -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get ns --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ```
 
   - Services
     ```
-    ./k8s-context get services -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get services --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get services -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get services --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
 
     -- or --
 
-    ./k8s-context get svc -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get svc --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get svc -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get svc --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ```
 
   - Deployments
     ```
-    ./k8s-context get deployments -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get deployments --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get deployments -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get deployments --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
 
     -- or --
 
-    ./k8s-context get deploy -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get deploy --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get deploy -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get deploy --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ```
 
   - Pods
     ```
-    ./k8s-context get pods -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get pods --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get pods -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get pods --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
 
     -- or --
 
-    ./k8s-context get po -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
-    ./k8s-context get po --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get po -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get po --namespace ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ```
 
   - Endpoints
     ```
-    ./k8s-context get endpoints -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get endpoints -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
 
     -- or --
 
-    ./k8s-context get ep -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
+    ./k8c get ep -n ns1,ns2,ns3 --kubeconfig=$HOME/.kube/config
     ```
 
 - Show (Describe) Resources from Nodes, Pods, Logs & Port Forward
 
   - Pods
     ```
-    ./k8s-context show po [pods_name] -n [namespace]
-    ./k8s-context show po [pods_name] --namespace [namespace]
+    ./k8c show po [pods_name] -n [namespace]
+    ./k8c show po [pods_name] --namespace [namespace]
     ```
 
   - Logs
     ```
-    ./k8s-context show logs [pods_name] -n [namespace]
-    ./k8s-context show logs [pods_name] --namespace [namespace]
+    ./k8c show logs [pods_name] -n [namespace]
+    ./k8c show logs [pods_name] --namespace [namespace]
     ```
 
   - Port Forward
     ```
-    ./k8s-context show port [pods_name] -n [namespace]
-    ./k8s-context show port [pods_name] --namespace [namespace]
+    ./k8c show port [pods_name] -n [namespace]
+    ./k8c show port [pods_name] --namespace [namespace]
     ```
 
   - Node
     ```
-    ./k8s-context show node [node_name]
+    ./k8c show node [node_name]
     ```
 
 - Integrated with CI/CD `Dockerfile` Pipeline
   ```
   # Dockerfile
-  COPY --from=devopscorner/k8s-context:latest /usr/local/bin/k8s-context /usr/local/bin/k8s-context
+  COPY --from=devopscorner/k8s-context:latest /usr/local/bin/k8c /usr/local/bin/k8c
   ```
 
 ## Tested Environment
@@ -410,7 +411,7 @@ Use "k8s-context [command] --help" for more information about a command.
   ```
   go version
   ---
-  go version go1.19.5 darwin/arm64
+  go version go1.21.3 darwin/arm64
   ```
 
 ## Security Check
