@@ -20,8 +20,9 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
 
 
 ### Binary ###
-# FROM golang:1.19.5-alpine3.17
-FROM nginx:${NGINX_VERSION:-1.23-alpine}
+# FROM golang:${GOLANG_VERSION:-1.21.3-alpine3.18}
+# FROM nginx:${NGINX_VERSION:-1.25-alpine3.18}
+FROM nginx:${NGINX_VERSION:-1.25-alpine}
 
 ARG BUILD_DATE
 ARG BUILD_VERSION
@@ -31,11 +32,11 @@ ARG GIT_URL
 ENV VENDOR="DevOpsCornerId"
 ENV AUTHOR="DevOpsCorner.id <support@devopscorner.id>"
 ENV IMG_NAME="alpine"
-ENV IMG_VERSION="3.17"
-ENV IMG_DESC="Docker GO App Alpine 3.17"
+ENV IMG_VERSION="3.18"
+ENV IMG_DESC="Docker GO App Alpine 3.18"
 ENV IMG_ARCH="amd64/x86_64"
 
-ENV ALPINE_VERSION="3.17"
+ENV ALPINE_VERSION="3.18"
 
 LABEL maintainer="$AUTHOR" \
         architecture="$IMG_ARCH" \
