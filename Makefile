@@ -13,23 +13,23 @@ export AWS_DEFAULT_REGION="ap-southeast-1"
 
 export CI_REGISTRY     ?= $(ARGS).dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 export CI_PROJECT_PATH ?= devopscorner
-export CI_PROJECT_NAME ?= k8s-context
+export CI_PROJECT_NAME ?= k8c
 
 IMAGE          = $(CI_REGISTRY)/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}
 DIR            = $(shell pwd)
-VERSION       ?= 1.7.0
+VERSION       ?= 1.1.9
 
 export BASE_IMAGE=alpine
-export BASE_VERSION=3.17
-export ALPINE_VERSION=3.17
+export BASE_VERSION=3.18
+export ALPINE_VERSION=3.18
 
-GO_APP        ?= k8s-context
+GO_APP        ?= k8c
 SOURCES        = $(shell find . -name '*.go' | grep -v /vendor/)
 VERSION       ?= $(shell git describe --tags --always --dirty)
 GOPKGS         = $(shell go list ./ | grep -v /vendor/)
 BUILD_FLAGS   ?=
 LDFLAGS       ?= -X github.com/devopscorner/k8s-context/config.Version=$(VERSION) -w -s
-TAG           ?= "v0.3.0"
+TAG           ?= "v1.1.9"
 GOARCH        ?= amd64
 GOOS          ?= linux
 GO111MODULE   ?= on
