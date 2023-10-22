@@ -20,7 +20,7 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
 
 
 ### Binary ###
-# FROM golang:1.19.5-alpine3.17
+# FROM golang:${GOLANG_VERSION:-1.19.5-alpine3.17}
 FROM nginx:${NGINX_VERSION:-1.23-alpine}
 
 ARG BUILD_DATE
@@ -77,6 +77,7 @@ COPY --from=devopscorner/cicd:alpine /usr/local/bin/ /usr/local/bin/
 COPY --from=devopscorner/cicd:alpine /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=builder-go /go/src/app/goapp /usr/local/bin/k8s-context
 COPY --from=builder-go /go/src/app/goapp /usr/local/bin/kc
+COPY --from=builder-go /go/src/app/goapp /usr/local/bin/k8c
 
 EXPOSE 22 80 443
 
