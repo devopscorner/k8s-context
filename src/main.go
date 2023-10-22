@@ -12,7 +12,8 @@ func main() {
 	appNameStyle := termenv.Style{}.Foreground(termenv.ANSIWhite).Bold()
 
 	fmt.Println(logoStyle.Styled(features.Logo))
+	fmt.Println("===================================")
 	fmt.Println("[[ ", appNameStyle.Styled(features.AppName), " ]] -", features.VERSION)
-	fmt.Println("==================================")
+	fmt.Println("===================================")
 	features.GetCommands()
 }

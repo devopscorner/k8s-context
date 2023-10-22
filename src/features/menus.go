@@ -32,7 +32,7 @@ const (
 
 `
 	AppName = "K8S-CONTEXT (K8C)"
-	VERSION = "v1.1.8"
+	VERSION = "v1.1.9"
 )
 
 func GetCommands() []*cobra.Command {
