@@ -69,7 +69,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 [[  K8S-CONTEXT (K8C)  ]] - v1.1.9
 ===================================
 Usage:
-  k8s-context [command]
+  k8c [command]
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
@@ -86,7 +86,7 @@ Flags:
   -h, --help                help for k8s-context
       --kubeconfig string   Path to kubeconfig file (default "/home/devopscorner/.kube/config")
 
-Use "k8s-context [command] --help" for more information about a command.
+Use "k8c [command] --help" for more information about a command.
 
 ```
 

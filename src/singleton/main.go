@@ -1305,7 +1305,7 @@ func GetCommands() []*cobra.Command {
 
 	switchContextCmd.Flags().StringVarP(&loadFile, "file", "f", "", "Using spesific kubeconfig file")
 
-	rootCmd := &cobra.Command{Use: "k8s-context"}
+	rootCmd := &cobra.Command{Use: "k8c"}
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", kubeconfig, "Path to kubeconfig file")
 
 	rootCmd.AddCommand(versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, showCmd, switchContextCmd)
