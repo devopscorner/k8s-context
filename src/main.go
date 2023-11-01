@@ -9,9 +9,11 @@ import (
 
 func main() {
 	logoStyle := termenv.Style{}.Foreground(termenv.ANSIGreen)
+	authorStyle := termenv.Style{}.Foreground(termenv.ANSIBlue)
 	appNameStyle := termenv.Style{}.Foreground(termenv.ANSIWhite).Bold()
 
-	fmt.Println(logoStyle.Styled(features.Logo))
+	fmt.Print(logoStyle.Styled(features.Logo))
+	fmt.Println(authorStyle.Styled(features.Author))
 	fmt.Println("===================================")
 	fmt.Println("[[ ", appNameStyle.Styled(features.AppName), " ]] -", features.VERSION)
 	fmt.Println("===================================")
