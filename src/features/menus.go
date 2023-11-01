@@ -23,14 +23,16 @@ import (
 )
 
 const (
-	Logo = `
- _    ___                            _            _
+	Logo = ` _    ___                            _            _
 | | _( _ ) ___        ___ ___  _ __ | |_ _____  _| |_
 | |/ / _ \/ __|_____ / __/ _ \| '_ \| __/ _ \ \/ / __|
 |   < (_) \__ \_____| (_| (_) | | | | ||  __/>  <| |_
 |_|\_\___/|___/      \___\___/|_| |_|\__\___/_/\_\\__|
-
-`
+------------------------------------------------------`
+	Author = `
+DevOps Corner Indonesia (devopscorner.id)
+https://github.com/devopscorner/k8s-context
+Apache v2.0 License`
 	AppName = "K8S-CONTEXT (K8C)"
 	VERSION = "v1.1.9"
 )
