@@ -45,7 +45,7 @@ DevOps Corner Indonesia (devopscorner.id)
 https://github.com/devopscorner/k8s-context
 Apache v2.0 License`
 	AppName = "K8S-CONTEXT (K8C)"
-	VERSION = "v1.1.9"
+	VERSION = "v1.24.5"
 )
 
 var (
