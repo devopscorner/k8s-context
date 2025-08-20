@@ -45,7 +45,7 @@ func GetLabels(pod *corev1.Pod) []string {
 
 func ShowPodsByFilter(pods *corev1.PodList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	table.Header([]string{
 		"POD NAME",
 		"READY",
 		"STATUS",
@@ -54,9 +54,6 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 		"IMAGE",
 		"NODE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, pod := range pods.Items {
 		var containerStatuses []string
@@ -90,13 +87,11 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 
 func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	table.Header([]string{
 		"NAME",
 		"STATUS",
 		"AGE",
 	})
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, ns := range namespaces.Items {
 		name := ns.ObjectMeta.Name
@@ -114,16 +109,13 @@ func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
 
 func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	table.Header([]string{
 		"NAME",
 		"READY",
 		"UP-TO-DATE",
 		"AVAILABLE",
 		"AGE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, deploy := range deployments.Items {
 		name := deploy.Name
@@ -526,14 +518,14 @@ func DescribeNodeTable(node *corev1.Node) {
 
 	addresses := node.Status.Addresses
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Type", "Address"})
+	table.Header([]string{"Type", "Address"})
 	for _, addr := range addresses {
 		table.Append([]string{string(addr.Type), addr.Address})
 	}
 	table.Render()
 
 	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Resource", "Allocatable", "Capacity"})
+	table.Header([]string{"Resource", "Allocatable", "Capacity"})
 	allocatable := node.Status.Allocatable
 	capacity := node.Status.Capacity
 	for resourceName, quantity := range allocatable {
@@ -543,7 +535,7 @@ func DescribeNodeTable(node *corev1.Node) {
 	table.Render()
 
 	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Condition", "Status"})
+	table.Header([]string{"Condition", "Status"})
 	for _, condition := range node.Status.Conditions {
 		table.Append([]string{string(condition.Type), BoolToString(condition.Status)})
 	}
@@ -552,7 +544,7 @@ func DescribeNodeTable(node *corev1.Node) {
 	fmt.Printf("Daemon Endpoint Port:\t%d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
 
 	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Size"})
+	table.Header([]string{"Name", "Size"})
 	for _, image := range node.Status.Images {
 		table.Append([]string{image.Names[0], ByteCountSI(image.SizeBytes)})
 	}

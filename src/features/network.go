@@ -15,7 +15,7 @@ import (
 
 func ShowServiceByFilter(services *corev1.ServiceList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	table.Header([]string{
 		"NAME",
 		"TYPE",
 		"CLUSTER-IP",
@@ -23,9 +23,6 @@ func ShowServiceByFilter(services *corev1.ServiceList) {
 		"PORT(S)",
 		"AGE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, service := range services.Items {
 		var externalIPs string
@@ -80,16 +77,13 @@ func ShowServiceByFilter(services *corev1.ServiceList) {
 
 func ShowEndpointByFilter(endpoints *corev1.EndpointsList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	table.Header([]string{
 		"NAME",
 		"ENDPOINTS TARGET",
 		"ENDPOINTS PORT(S)",
 		// "ENDPOINTS NAME",
 		"AGE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, ep := range endpoints.Items {
 		serviceName := ep.ObjectMeta.Name

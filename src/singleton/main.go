@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -16,12 +15,12 @@ import (
 	"strings"
 	"time"
 
-	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/muesli/termenv"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -106,7 +105,8 @@ func CalculateReadiness(pod *corev1.Pod) (int, int) {
 // -------------------------------------------------------------------
 func ShowServiceByFilter(services *corev1.ServiceList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	// Add header row
+	table.Append([]string{
 		"NAME",
 		"TYPE",
 		"CLUSTER-IP",
@@ -114,9 +114,6 @@ func ShowServiceByFilter(services *corev1.ServiceList) {
 		"PORT(S)",
 		"AGE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, service := range services.Items {
 		var externalIPs string
@@ -171,16 +168,14 @@ func ShowServiceByFilter(services *corev1.ServiceList) {
 
 func ShowEndpointByFilter(endpoints *corev1.EndpointsList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	// Add header row
+	table.Append([]string{
 		"NAME",
 		"ENDPOINTS TARGET",
 		"ENDPOINTS PORT(S)",
 		// "ENDPOINTS NAME",
 		"AGE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, ep := range endpoints.Items {
 		serviceName := ep.ObjectMeta.Name
@@ -265,7 +260,8 @@ func GetLabels(pod *corev1.Pod) []string {
 
 func ShowPodsByFilter(pods *corev1.PodList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	// Add header row
+	table.Append([]string{
 		"POD NAME",
 		"READY",
 		"STATUS",
@@ -274,9 +270,6 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 		"IMAGE",
 		"NODE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, pod := range pods.Items {
 		var containerStatuses []string
@@ -310,13 +303,12 @@ func ShowPodsByFilter(pods *corev1.PodList) {
 
 func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	// Add header row
+	table.Append([]string{
 		"NAME",
 		"STATUS",
 		"AGE",
 	})
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, ns := range namespaces.Items {
 		name := ns.ObjectMeta.Name
@@ -334,16 +326,14 @@ func ShowNamespaceByFilter(namespaces *corev1.NamespaceList) {
 
 func ShowDeploymentByFilter(deployments *v1.DeploymentList) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{
+	// Add header row
+	table.Append([]string{
 		"NAME",
 		"READY",
 		"UP-TO-DATE",
 		"AVAILABLE",
 		"AGE",
 	})
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
 
 	for _, deploy := range deployments.Items {
 		name := deploy.Name
@@ -365,13 +355,6 @@ func DescribePods(pod *corev1.Pod) {
 	fmt.Printf("Name: \t\t%s\n", pod.ObjectMeta.Name)
 	fmt.Printf("Namespace: \t%s\n", pod.ObjectMeta.Namespace)
 	fmt.Printf("Priority:  \t%d\n", pod.Spec.Priority)
-
-	// labelsJSON, err := json.MarshalIndent(pod.ObjectMeta.Labels, "", "\t")
-	// if err != nil {
-	// 	fmt.Println("Error marshaling labels to JSON:", err)
-	// } else {
-	// 	fmt.Println("Labels:\n", string(labelsJSON))
-	// }
 
 	// Convert labels to YAML
 	labelsYAML, err := yaml.Marshal(pod.ObjectMeta.Labels)
@@ -656,13 +639,6 @@ func DescribeNode(node *corev1.Node) {
 	// Print detailed information about the node
 	fmt.Println("Name:\t", node.ObjectMeta.Name)
 
-	// labelsJSON, err := json.MarshalIndent(node.ObjectMeta.Labels, "", "\t")
-	// if err != nil {
-	// 	fmt.Println("Error marshaling labels to JSON:", err)
-	// } else {
-	// 	fmt.Println("Labels:\n", string(labelsJSON))
-	// }
-
 	// Convert labels to YAML
 	labelsYAML, err := yaml.Marshal(node.ObjectMeta.Labels)
 	if err != nil {
@@ -682,26 +658,28 @@ func DescribeNode(node *corev1.Node) {
 
 	fmt.Println("Allocatable Resources:")
 	for resourceName, quantity := range node.Status.Allocatable {
-		if resourceName == "memory" || resourceName == "pods" || resourceName == "memory" {
+		switch resourceName {
+		case "memory", "pods":
 			fmt.Printf("  %s: \t\t%s\n", resourceName, quantity.String())
-		} else if resourceName == "cpu" {
+		case "cpu":
 			fmt.Printf("  %s: \t\t\t%s\n", resourceName, quantity.String())
-		} else if resourceName == "attachable-volumes-aws-ebs" {
+		case "attachable-volumes-aws-ebs":
 			fmt.Printf("  %s: %s\n", resourceName, quantity.String())
-		} else {
+		default:
 			fmt.Printf("  %s: \t%s\n", resourceName, quantity.String())
 		}
 	}
 
 	fmt.Println("Capacity:")
 	for capacity, quantity := range node.Status.Capacity {
-		if capacity == "memory" || capacity == "pods" || capacity == "memory" {
+		switch capacity {
+		case "memory", "pods":
 			fmt.Printf("  %s: \t\t%s\n", capacity, quantity.String())
-		} else if capacity == "cpu" {
+		case "cpu":
 			fmt.Printf("  %s: \t\t\t%s\n", capacity, quantity.String())
-		} else if capacity == "attachable-volumes-aws-ebs" {
+		case "attachable-volumes-aws-ebs":
 			fmt.Printf("  %s: %s\n", capacity, quantity.String())
-		} else {
+		default:
 			fmt.Printf("  %s: \t%s\n", capacity, quantity.String())
 		}
 	}
@@ -716,8 +694,6 @@ func DescribeNode(node *corev1.Node) {
 	}
 
 	fmt.Println("Daemon Endpoint:")
-	// endpoint := n.Status.DaemonEndpoints.KubeletEndpoint
-	// fmt.Printf("  - Kubelet Endpoint: %s\n", endpoint.String())
 	fmt.Printf("  Kubelet Endpoint Port: %d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
 
 	fmt.Println("Images:")
@@ -746,14 +722,14 @@ func DescribeNodeTable(node *corev1.Node) {
 
 	addresses := node.Status.Addresses
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Type", "Address"})
+	table.Append([]string{"Type", "Address"})
 	for _, addr := range addresses {
 		table.Append([]string{string(addr.Type), addr.Address})
 	}
 	table.Render()
 
 	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Resource", "Allocatable", "Capacity"})
+	table.Append([]string{"Resource", "Allocatable", "Capacity"})
 	allocatable := node.Status.Allocatable
 	capacity := node.Status.Capacity
 	for resourceName, quantity := range allocatable {
@@ -763,7 +739,7 @@ func DescribeNodeTable(node *corev1.Node) {
 	table.Render()
 
 	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Condition", "Status"})
+	table.Append([]string{"Condition", "Status"})
 	for _, condition := range node.Status.Conditions {
 		table.Append([]string{string(condition.Type), BoolToString(condition.Status)})
 	}
@@ -772,7 +748,7 @@ func DescribeNodeTable(node *corev1.Node) {
 	fmt.Printf("Daemon Endpoint Port:\t%d\n", node.Status.DaemonEndpoints.KubeletEndpoint.Port)
 
 	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Size"})
+	table.Append([]string{"Name", "Size"})
 	for _, image := range node.Status.Images {
 		table.Append([]string{image.Names[0], ByteCountSI(image.SizeBytes)})
 	}
@@ -788,6 +764,251 @@ func DescribeNodeTable(node *corev1.Node) {
 	fmt.Printf("Kube-Proxy Version:\t%s\n", node.Status.NodeInfo.KubeProxyVersion)
 	fmt.Printf("Operating System:\t%s\n", node.Status.NodeInfo.OperatingSystem)
 	fmt.Printf("Architecture:\t\t%s\n", node.Status.NodeInfo.Architecture)
+}
+
+// -------------------------------------------------------------------
+// context.go
+// -------------------------------------------------------------------
+func (kc *KubeConfig) Load() error {
+	var configs []*clientcmdapi.Config
+	for _, file := range kc.Files {
+		loaded, err := clientcmd.LoadFromFile(file)
+		if err != nil {
+			return err
+		}
+		configs = append(configs, loaded)
+	}
+	merged, err := MergeConfigs(configs)
+	if err != nil {
+		return err
+	}
+	kc.Merged = merged
+	return nil
+}
+
+func (kc *KubeConfig) SaveToFile(file string) error {
+	return clientcmd.WriteToFile(*kc.Merged, file)
+}
+
+func MergeConfigs(configs []*clientcmdapi.Config) (*clientcmdapi.Config, error) {
+	newConfig := &clientcmdapi.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		Clusters:   make(map[string]*clientcmdapi.Cluster),
+		AuthInfos:  make(map[string]*clientcmdapi.AuthInfo),
+		Contexts:   make(map[string]*clientcmdapi.Context),
+	}
+
+	for _, config := range configs {
+		for k, v := range config.AuthInfos {
+			newConfig.AuthInfos[k] = v
+		}
+		for k, v := range config.Clusters {
+			newConfig.Clusters[k] = v
+		}
+		for k, v := range config.Contexts {
+			newConfig.Contexts[k] = v
+		}
+	}
+	for _, config := range configs {
+		if config.CurrentContext != "" {
+			newConfig.CurrentContext = config.CurrentContext
+			break
+		}
+	}
+
+	return newConfig, nil
+}
+
+func GetClientSet(kubeconfig string) (*kubernetes.Clientset, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
+}
+
+func GetCurrentContext(config *clientcmdapi.Config) (string, error) {
+	if config == nil {
+		return "", fmt.Errorf("kubeconfig is nil")
+	}
+	if config.CurrentContext == "" {
+		return "", fmt.Errorf("no current context set in kubeconfig")
+	}
+	context, ok := config.Contexts[config.CurrentContext]
+	if !ok {
+		return "", fmt.Errorf("current context not found in kubeconfig: %s", config.CurrentContext)
+	}
+	return context.Cluster, nil
+}
+
+func ListContexts(kc *KubeConfig) error {
+	fmt.Println("Available contexts:")
+	currentContext, err := GetCurrentContext(kc.Merged)
+	if err != nil {
+		return err
+	}
+	for contextName := range kc.Merged.Contexts {
+		prefix := " "
+		if contextName == currentContext {
+			prefix = "*"
+		}
+		fmt.Printf("%s %s\n", prefix, contextName)
+	}
+	return nil
+}
+
+func ShowDetailList(config *clientcmdapi.Config) error {
+	contextsMap := config.Contexts
+
+	// Create a slice of context information
+	var contextInfo []struct {
+		ContextName string
+		ClusterName string
+	}
+
+	// Iterate through each context and extract the cluster and user information
+	for contextName, contextConfig := range contextsMap {
+		clusterName := contextConfig.Cluster
+		clusterConfig, found := config.Clusters[clusterName]
+		if !found {
+			return fmt.Errorf("cluster %s not found in config", clusterName)
+		}
+		contextInfo = append(contextInfo, struct {
+			ContextName string
+			ClusterName string
+		}{
+			ContextName: contextName,
+			ClusterName: clusterConfig.Server,
+		})
+	}
+
+	// Print the list of context names
+	fmt.Println("Available Kubernetes contexts:")
+
+	// Print the table of context information
+	table := tablewriter.NewWriter(os.Stdout)
+	table.Append([]string{"Context Name", "Cluster Name"})
+	for _, info := range contextInfo {
+		table.Append([]string{info.ContextName, info.ClusterName})
+	}
+	table.Render()
+
+	return nil
+}
+
+func ShowContext(kc *KubeConfig) error {
+	if err := kc.Load(); err != nil {
+		return err
+	}
+
+	currentContext, err := GetCurrentContext(kc.Merged)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Current context: %s\n", currentContext)
+
+	return nil
+}
+
+func InitConfig() error {
+	home := homedir.HomeDir()
+	kubeconfig := filepath.Join(home, ".kube", "config")
+
+	// Use default kubeconfig file if load flag is not provided
+	if loadFile == "" {
+		if selectedConfig != "" {
+			configBytes, err = os.ReadFile(selectedConfig)
+		} else {
+			configBytes, err = os.ReadFile(kubeconfig)
+		}
+		if err != nil {
+			return err
+		}
+	} else {
+		// Load kubeconfig file from flag
+		configBytes, err = os.ReadFile(loadFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func SelectedConfig(contextNames []string, config *clientcmdapi.Config) error {
+	var selectedContext string
+	prompt := &survey.Select{
+		Message: "Select a context",
+		Options: contextNames,
+	}
+
+	if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
+		return err
+	}
+
+	fmt.Printf("Selected context: %s\n", selectedContext)
+
+	context, ok := config.Contexts[selectedContext]
+	if !ok {
+		return fmt.Errorf("context not found: %s", selectedContext)
+	}
+
+	cluster, ok := config.Clusters[context.Cluster]
+	if !ok {
+		return fmt.Errorf("cluster not found: %s", context.Cluster)
+	}
+
+	fmt.Printf("Cluster server: %s\n", cluster.Server)
+
+	if loadFile == "" {
+		ChangeKubeconfigContext(kubeconfig, selectedContext)
+	} else {
+		ChangeKubeconfigContext(loadFile, selectedContext)
+	}
+
+	return nil
+}
+
+func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
+	// Load the Kubernetes configuration file.
+	kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	// Parse the configuration file into an API object.
+	kubeconfig, err := clientcmd.Load(kubeconfigBytes)
+	if err != nil {
+		fmt.Printf("\n> Can't read Kubernetes configuration file")
+		return err
+	}
+
+	// Check if the specified context exists.
+	if _, ok := kubeconfig.Contexts[contextName]; !ok {
+		fmt.Printf("\n> Context does not exist in the Kubernetes configuration file ($HOME/.kube/config) \n> Merge into your Kubernetes config file first... ")
+		return err
+	}
+
+	// Change the current context to the new context.
+	kubeconfig.CurrentContext = contextName
+
+	// Write the modified configuration back to the file.
+	err = clientcmd.ModifyConfig(clientcmd.NewDefaultPathOptions(), *kubeconfig, true)
+	if err != nil {
+		fmt.Printf("\n> Failed to change context: %s\n", kubeconfig.CurrentContext)
+		return err
+	} else {
+		fmt.Printf("\n> Successfully change context to: %s\n", kubeconfig.CurrentContext)
+		return nil
+	}
 }
 
 // -------------------------------------------------------------------
@@ -1160,10 +1381,6 @@ func GetCommands() []*cobra.Command {
 					return err
 				}
 
-				if err != nil {
-					return err
-				}
-
 				if len(args) < 1 {
 					return fmt.Errorf("pod name not specified")
 				}
@@ -1262,9 +1479,6 @@ func GetCommands() []*cobra.Command {
 			}
 
 			ctx := context.Background()
-			if err != nil {
-				return err
-			}
 
 			node := args[0]
 
@@ -1319,257 +1533,4 @@ func GetCommands() []*cobra.Command {
 	}
 
 	return []*cobra.Command{versionCmd, getCmd, listContextsCmd, loadCmd, mergeCmd, showCmd, switchContextCmd}
-}
-
-// -------------------------------------------------------------------
-// context.go
-// -------------------------------------------------------------------
-func (kc *KubeConfig) Load() error {
-	var configs []*clientcmdapi.Config
-	for _, file := range kc.Files {
-		loaded, err := clientcmd.LoadFromFile(file)
-		if err != nil {
-			return err
-		}
-		configs = append(configs, loaded)
-	}
-	merged, err := MergeConfigs(configs)
-	if err != nil {
-		return err
-	}
-	kc.Merged = merged
-	return nil
-}
-
-func (kc *KubeConfig) SaveToFile(file string) error {
-	return clientcmd.WriteToFile(*kc.Merged, file)
-}
-
-func MergeConfigs(configs []*clientcmdapi.Config) (*clientcmdapi.Config, error) {
-	newConfig := &clientcmdapi.Config{
-		Kind:       "Config",
-		APIVersion: "v1",
-		Clusters:   make(map[string]*clientcmdapi.Cluster),
-		AuthInfos:  make(map[string]*clientcmdapi.AuthInfo),
-		Contexts:   make(map[string]*clientcmdapi.Context),
-	}
-
-	for _, config := range configs {
-		for k, v := range config.AuthInfos {
-			newConfig.AuthInfos[k] = v
-		}
-		for k, v := range config.Clusters {
-			newConfig.Clusters[k] = v
-		}
-		for k, v := range config.Contexts {
-			newConfig.Contexts[k] = v
-		}
-	}
-	for _, config := range configs {
-		if config.CurrentContext != "" {
-			newConfig.CurrentContext = config.CurrentContext
-			break
-		}
-	}
-
-	return newConfig, nil
-}
-
-func GetClientSet(kubeconfig string) (*kubernetes.Clientset, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return clientset, nil
-}
-
-func GetCurrentContext(config *clientcmdapi.Config) (string, error) {
-	if config == nil {
-		return "", fmt.Errorf("kubeconfig is nil")
-	}
-	if config.CurrentContext == "" {
-		return "", fmt.Errorf("no current context set in kubeconfig")
-	}
-	context, ok := config.Contexts[config.CurrentContext]
-	if !ok {
-		return "", fmt.Errorf("current context not found in kubeconfig: %s", config.CurrentContext)
-	}
-	return context.Cluster, nil
-}
-
-func ListContexts(kc *KubeConfig) error {
-	fmt.Println("Available contexts:")
-	currentContext, err := GetCurrentContext(kc.Merged)
-	if err != nil {
-		return err
-	}
-	for contextName := range kc.Merged.Contexts {
-		prefix := " "
-		if contextName == currentContext {
-			prefix = "*"
-		}
-		fmt.Printf("%s %s\n", prefix, contextName)
-	}
-	return nil
-}
-
-func ShowDetailList(config *clientcmdapi.Config) error {
-	contextsMap := config.Contexts
-
-	// Create a slice of context information
-	var contextInfo []struct {
-		ContextName string
-		ClusterName string
-	}
-
-	// Iterate through each context and extract the cluster and user information
-	for contextName, contextConfig := range contextsMap {
-		clusterName := contextConfig.Cluster
-		clusterConfig, found := config.Clusters[clusterName]
-		if !found {
-			return fmt.Errorf("cluster %s not found in config", clusterName)
-		}
-		contextInfo = append(contextInfo, struct {
-			ContextName string
-			ClusterName string
-		}{
-			ContextName: contextName,
-			ClusterName: clusterConfig.Server,
-		})
-	}
-
-	// Print the list of context names
-	fmt.Println("Available Kubernetes contexts:")
-
-	// Print the table of context information
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Context Name", "Cluster Name"})
-	for _, info := range contextInfo {
-		table.Append([]string{info.ContextName, info.ClusterName})
-	}
-	table.Render()
-
-	return nil
-}
-
-func ShowContext(kc *KubeConfig) error {
-	if err := kc.Load(); err != nil {
-		return err
-	}
-
-	currentContext, err := GetCurrentContext(kc.Merged)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Current context: %s\n", currentContext)
-
-	return nil
-}
-
-func InitConfig() error {
-	home := homedir.HomeDir()
-	kubeconfig := filepath.Join(home, ".kube", "config")
-
-	// Use default kubeconfig file if load flag is not provided
-	if loadFile == "" {
-		if selectedConfig != "" {
-			configBytes, err = os.ReadFile(selectedConfig)
-		} else {
-			configBytes, err = os.ReadFile(kubeconfig)
-		}
-		if err != nil {
-			return err
-		}
-	} else {
-		// Load kubeconfig file from flag
-		configBytes, err = os.ReadFile(loadFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func SelectedConfig(contextNames []string, config *clientcmdapi.Config) error {
-	var selectedContext string
-	prompt := &survey.Select{
-		Message: "Select a context",
-		Options: contextNames,
-	}
-
-	if err := survey.AskOne(prompt, &selectedContext, survey.WithValidator(survey.Required)); err != nil {
-		return err
-	}
-
-	fmt.Printf("Selected context: %s\n", selectedContext)
-
-	context, ok := config.Contexts[selectedContext]
-	if !ok {
-		return fmt.Errorf("context not found: %s", selectedContext)
-	}
-
-	cluster, ok := config.Clusters[context.Cluster]
-	if !ok {
-		return fmt.Errorf("cluster not found: %s", context.Cluster)
-	}
-
-	// auth, ok := config.AuthInfos[context.AuthInfo]
-	// if !ok {
-	// 	return fmt.Errorf("auth info not found: %s", context.AuthInfo)
-	// }
-
-	fmt.Printf("Cluster server: %s\n", cluster.Server)
-	// fmt.Printf("Cluster certificate authority: %s\n", cluster.CertificateAuthority)
-	// fmt.Printf("User name: %s\n", auth.Username)
-
-	if loadFile == "" {
-		ChangeKubeconfigContext(kubeconfig, context.Cluster)
-	} else {
-		ChangeKubeconfigContext(loadFile, context.Cluster)
-	}
-
-	return nil
-}
-
-func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
-	// Load the Kubernetes configuration file.
-	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
-	if err != nil {
-		return err
-	}
-
-	// Parse the configuration file into an API object.
-	kubeconfig, err := clientcmd.Load(kubeconfigBytes)
-	if err != nil {
-		fmt.Printf("\n> Can't read Kubernetes configuration file")
-		return err
-	}
-
-	// Check if the specified context exists.
-	if _, ok := kubeconfig.Contexts[contextName]; !ok {
-		fmt.Printf("\n> Context does not exist in the Kubernetes configuration file ($HOME/.kube/config) \n> Merge into your Kubernetes config file first... ")
-		return err
-	}
-
-	// Change the current context to the new context.
-	kubeconfig.CurrentContext = contextName
-
-	// Write the modified configuration back to the file.
-	err = clientcmd.ModifyConfig(clientcmd.NewDefaultPathOptions(), *kubeconfig, true)
-	if err != nil {
-		fmt.Printf("\n> Failed to change context: %s\n", kubeconfig.CurrentContext)
-		return err
-	} else {
-		fmt.Printf("\n> Successfully change context to: %s\n", kubeconfig.CurrentContext)
-		return nil
-	}
-	return nil
 }
