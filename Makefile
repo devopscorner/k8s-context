@@ -17,11 +17,11 @@ export CI_PROJECT_NAME ?= k8c
 
 IMAGE          = $(CI_REGISTRY)/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}
 DIR            = $(shell pwd)
-VERSION       ?= 1.1.9
+VERSION       ?= 1.24.5
 
 export BASE_IMAGE=alpine
-export BASE_VERSION=3.18
-export ALPINE_VERSION=3.18
+export BASE_VERSION=3.22
+export ALPINE_VERSION=3.22
 
 GO_APP        ?= k8c
 SOURCES        = $(shell find . -name '*.go' | grep -v /vendor/)
@@ -119,57 +119,57 @@ git-clone:
 #   BUILD CONTAINER GO-APP   #
 # ========================== #
 .PHONY: dockerhub-build-alpine ecr-build-alpine
-# ./dockerhub-build.sh Dockerfile [DOCKERHUB_IMAGE_PATH] [alpine] [version|latest|tags] [custom-tags]
+# ./scripts/dockerhub-build.sh Dockerfile [DOCKERHUB_IMAGE_PATH] [alpine] [version|latest|tags] [custom-tags]
 dockerhub-build-alpine:
 	@echo "========================================================"
 	@echo " Task      : Create Container GO-APP Alpine Image "
 	@echo " Date/Time : `date`"
 	@echo "========================================================"
-	@sh ./dockerhub-build.sh Dockerfile $(CI_PATH) alpine ${ALPINE_VERSION}
+	@sh ./scripts/dockerhub-build.sh Dockerfile $(CI_PATH) alpine ${ALPINE_VERSION}
 
-# ./ecr-build.sh [AWS_ACCOUNT] Dockerfile [ECR_PATH] [alpine] [version|latest|tags] [custom-tags]
+# ./scripts/ecr-build.sh [AWS_ACCOUNT] Dockerfile [ECR_PATH] [alpine] [version|latest|tags] [custom-tags]
 ecr-build-alpine:
 	@echo "========================================================"
 	@echo " Task      : Create Container GO-APP Alpine Image "
 	@echo " Date/Time : `date`"
 	@echo "========================================================"
-	@sh ./ecr-build.sh $(ARGS) Dockerfile $(CI_PATH) alpine ${ALPINE_VERSION}
+	@sh ./scripts/ecr-build.sh $(ARGS) Dockerfile $(CI_PATH) alpine ${ALPINE_VERSION}
 
 # ========================= #
 #   TAGS CONTAINER GO-APP   #
 # ========================= #
 .PHONY: tag-dockerhub-alpine tag-ecr-alpine
-# ./dockerhub-tag.sh [DOCKERHUB_IMAGE_PATH] [alpine] [version|latest|tags] [custom-tags]
+# ./scripts/dockerhub-tag.sh [DOCKERHUB_IMAGE_PATH] [alpine] [version|latest|tags] [custom-tags]
 dockerhub-tag-alpine:
 	@echo "========================================================"
 	@echo " Task      : Set Tags Image Alpine to DockerHub"
 	@echo " Date/Time : `date`"
 	@echo "========================================================"
-	@sh ./dockerhub-tag.sh $(CI_PATH) alpine ${ALPINE_VERSION}
+	@sh ./scripts/dockerhub-tag.sh $(CI_PATH) alpine ${ALPINE_VERSION}
 
-# ./ecr-tag.sh [AWS_ACCOUNT] [ECR_PATH] [alpine|codebuild] [version|latest|tags] [custom-tags]
+# ./scripts/ecr-tag.sh [AWS_ACCOUNT] [ECR_PATH] [alpine|codebuild] [version|latest|tags] [custom-tags]
 ecr-tag-alpine:
 	@echo "========================================================"
 	@echo " Task      : Set Tags Image Alpine to ECR"
 	@echo " Date/Time : `date`"
 	@echo "========================================================"
-	@sh ./ecr-tag.sh $(ARGS) $(CI_PATH) alpine ${ALPINE_VERSION}
+	@sh ./scripts/ecr-tag.sh $(ARGS) $(CI_PATH) alpine ${ALPINE_VERSION}
 
 # ========================= #
 #   PUSH CONTAINER GO-APP   #
 # ========================= #
 .PHONY: dockerhub-push-alpine ecr-push-alpine
-# ./dockerhub-push.sh [DOCKERHUB_IMAGE_PATH] [alpine|version|latest|tags|custom-tags]
+# ./scripts/dockerhub-push.sh [DOCKERHUB_IMAGE_PATH] [alpine|version|latest|tags|custom-tags]
 dockerhub-push-alpine:
 	@echo "========================================================"
 	@echo " Task      : Push Image Alpine to DockerHub"
 	@echo " Date/Time : `date`"
 	@echo "========================================================"
-	@sh ./dockerhub-push.sh $(CI_PATH) alpine
+	@sh ./scripts/dockerhub-push.sh $(CI_PATH) alpine
 
 ecr-push-alpine:
 	@echo "========================================================"
 	@echo " Task      : Push Image Alpine to ECR"
 	@echo " Date/Time : `date`"
 	@echo "========================================================"
-	@sh ./ecr-push.sh $(ARGS) $(CI_PATH) alpine
+	@sh ./scripts/ecr-push.sh $(ARGS) $(CI_PATH) alpine
