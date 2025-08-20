@@ -68,7 +68,7 @@ Customize Kubernetes Change Context (KUBECONFIG)
 
 
 ===================================
-[[  K8S-CONTEXT (K8C)  ]] - v1.1.9
+[[  K8S-CONTEXT (K8C)  ]] - v1.24.5
 ===================================
 Usage:
   k8c [command]
