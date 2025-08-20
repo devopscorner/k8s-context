@@ -22,7 +22,7 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
 ### Binary ###
 # FROM golang:${GOLANG_VERSION:-1.21.3-alpine3.18}
 # FROM nginx:${NGINX_VERSION:-1.25-alpine3.18}
-FROM nginx:${NGINX_VERSION:-1.25-alpine}
+FROM nginx:1.25-alpine
 
 ARG BUILD_DATE
 ARG BUILD_VERSION
