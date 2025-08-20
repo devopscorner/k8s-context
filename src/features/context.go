@@ -2,7 +2,6 @@ package features
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -153,7 +152,7 @@ func ShowDetailList(config *clientcmdapi.Config) error {
 
 	// Print the table of context information
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Context Name", "Cluster Name"})
+	table.Header([]string{"Context Name", "Cluster Name"})
 	for _, info := range contextInfo {
 		table.Append([]string{info.ContextName, info.ClusterName})
 	}
@@ -235,9 +234,9 @@ func SelectedConfig(contextNames []string, config *clientcmdapi.Config) error {
 	// fmt.Printf("User name: %s\n", auth.Username)
 
 	if loadFile == "" {
-		ChangeKubeconfigContext(kubeconfig, context.Cluster)
+		ChangeKubeconfigContext(kubeconfig, selectedContext)
 	} else {
-		ChangeKubeconfigContext(loadFile, context.Cluster)
+		ChangeKubeconfigContext(loadFile, selectedContext)
 	}
 
 	return nil
@@ -245,7 +244,7 @@ func SelectedConfig(contextNames []string, config *clientcmdapi.Config) error {
 
 func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
 	// Load the Kubernetes configuration file.
-	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+	kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
 		return err
 	}
@@ -275,5 +274,4 @@ func ChangeKubeconfigContext(kubeconfigPath string, contextName string) error {
 		fmt.Printf("\n> Successfully change context to: %s\n", kubeconfig.CurrentContext)
 		return nil
 	}
-	return nil
 }
